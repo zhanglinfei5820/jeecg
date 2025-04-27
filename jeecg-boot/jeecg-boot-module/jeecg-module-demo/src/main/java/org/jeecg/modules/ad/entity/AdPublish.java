@@ -70,7 +70,7 @@ public class AdPublish implements Serializable {
 	/**广告标题*/
 	@Excel(name = "广告标题", width = 15)
     @Schema(description = "广告标题")
-    private String title;
+    private String name;
 	/**开始报名时间*/
 	@Excel(name = "开始报名时间", width = 20, format = "yyyy-MM-dd HH:mm:ss")
 	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
@@ -83,6 +83,18 @@ public class AdPublish implements Serializable {
     @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
     @Schema(description = "报名结束时间")
     private Date endTime;
+	/**投放开始时间*/
+	@Excel(name = "投放开始时间", width = 20, format = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    @Schema(description = "投放开始时间")
+    private Date launchStartTime;
+	/**投放结束时间*/
+	@Excel(name = "投放结束时间", width = 20, format = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    @Schema(description = "投放结束时间")
+    private Date launchEndTime;
 	/**预算金额*/
 	@Excel(name = "预算金额", width = 15)
     @Schema(description = "预算金额")

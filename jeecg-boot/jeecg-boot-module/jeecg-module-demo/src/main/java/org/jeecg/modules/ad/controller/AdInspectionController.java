@@ -1,18 +1,13 @@
 package org.jeecg.modules.ad.controller;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.modules.ad.entity.AdInspection;
-import org.jeecg.modules.ad.entity.AdVehicle;
+import org.jeecg.modules.ad.entity.Vo.AdInspectionVO;
 import org.jeecg.modules.ad.service.IAdInspectionService;
-import org.jeecg.modules.ad.service.IAdVehicleService;
-import org.springframework.beans.BeanUtils;
-import java.util.ArrayList;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -28,7 +23,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import org.jeecg.common.aspect.annotation.AutoLog;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
- /**
+/**
  * @Description: 广告年检表
  * @Author: jeecg-boot
  * @Date:   2025-04-14
@@ -41,9 +36,6 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 public class AdInspectionController extends JeecgController<AdInspection, IAdInspectionService> {
 	@Autowired
 	private IAdInspectionService adInspectionService;
-	
-	@Autowired
-	private IAdVehicleService adVehicleService;
 	
 	/**
 	 * 分页列表查询
@@ -67,47 +59,24 @@ public class AdInspectionController extends JeecgController<AdInspection, IAdIns
 		return Result.OK(pageList);
 	}
 
-	 /**
-	  * 微信分页列表查询
-	  *
-	  * @param adInspection
-	  * @param pageNo
-	  * @param pageSize
-	  * @param req
-	  * @return
-	  */
-	 //@AutoLog(value = "广告年检表-微信分页列表查询")
-	 @Operation(summary="广告年检表-微信分页列表查询")
-	 @GetMapping(value = "/vxList")
-	 public Result<IPage<?>> queryPageVxList(AdInspection adInspection,
+	/**
+	 * 微信分页列表查询
+	 *
+	 * @param adInspection
+	 * @param pageNo
+	 * @param pageSize
+	 * @param adName
+	 * @return
+	 */
+	@Operation(summary="广告年检表-微信分页列表查询")
+	@GetMapping(value = "/vxList")
+	public Result<IPage<AdInspectionVO>> queryPageVxList(AdInspection adInspection,
 													  @RequestParam(name="pageNo", defaultValue="1") Integer pageNo,
 													  @RequestParam(name="pageSize", defaultValue="10") Integer pageSize,
-													  HttpServletRequest req) {
-		 QueryWrapper<AdInspection> queryWrapper = QueryGenerator.initQueryWrapper(adInspection, req.getParameterMap());
-		 Page<AdInspection> page = new Page<AdInspection>(pageNo, pageSize);
-		 IPage<AdInspection> pageList = adInspectionService.page(page, queryWrapper);
-		 // 获取所有车辆ID
-		List<String> vehicleIds = pageList.getRecords().stream()
-			.map(AdInspection::getVehicleId)
-			.distinct()
-			.collect(Collectors.toList());
-			
-		// 查询车辆信息
-		List<AdVehicle> vehicleList = new ArrayList<>();
-		if (!vehicleIds.isEmpty()) {
-			vehicleList = adVehicleService.listByIds(vehicleIds);
-		}
-		
-		//配置AdVehicle类型的IPage
-		Page<AdVehicle> voPage = new Page<>();
-		//pageList属性值赋值过来
-		BeanUtils.copyProperties(pageList, voPage, "records");
-		
-		//将vehicleList放进去
-		voPage.setRecords(vehicleList);
-		
-		return Result.OK(voPage);
-	 }
+													  @RequestParam(name="adName", required = false) String adName) {
+		IPage<AdInspectionVO> pageList = adInspectionService.queryPageVxList(adInspection, pageNo, pageSize, adName);
+		return Result.OK(pageList);
+	}
 	
 	/**
 	 *   添加
@@ -210,33 +179,5 @@ public class AdInspectionController extends JeecgController<AdInspection, IAdIns
     public Result<?> importExcel(HttpServletRequest request, HttpServletResponse response) {
         return super.importExcel(request, response, AdInspection.class);
     }
-
-	/**
-	 * 获取年检数据集合，包含车辆信息
-	 *
-	 * @param adInspection
-	 * @return
-	 */
-	@AutoLog(value = "广告年检表-获取年检数据集合")
-	@Operation(summary="广告年检表-获取年检数据集合")
-	@GetMapping(value = "/listWithVehicle")
-	public Result<List<AdVehicle>> listWithVehicle(AdInspection adInspection) {
-		QueryWrapper<AdInspection> queryWrapper = QueryGenerator.initQueryWrapper(adInspection, null);
-		List<AdInspection> inspectionList = adInspectionService.list(queryWrapper);
-		
-		// 获取所有车辆ID
-		List<String> vehicleIds = inspectionList.stream()
-			.map(AdInspection::getVehicleId)
-			.distinct()
-			.collect(Collectors.toList());
-			
-		// 查询车辆信息
-		List<AdVehicle> vehicleList = new ArrayList<>();
-		if (!vehicleIds.isEmpty()) {
-			vehicleList = adVehicleService.listByIds(vehicleIds);
-		}
-		
-		return Result.OK(vehicleList);
-	}
 
 }
