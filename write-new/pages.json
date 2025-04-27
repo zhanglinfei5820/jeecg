@@ -1,0 +1,238 @@
+{
+    "pages": [
+		{
+		    "path": "pages/home/index",
+		    "style": {
+		        "navigationBarTitleText": "首页"
+		    }
+		},
+		{
+		    "path": "pages/login/index",
+		    "style": {
+		        "navigationBarTitleText": "登录",
+		        "navigationBarBackgroundColor": "#fff"
+		    }
+		},
+        {
+            "path": "pages/index/index",
+            "style": {
+                "navigationBarTitleText": "任务进度列表",
+                "navigationBarBackgroundColor": "#eeeceb",
+                "navigationBarTextStyle": "black"
+            }
+        },
+        {
+            "path": "pages/message/index",
+            "style": {
+                "navigationBarTitleText": "预约信息"
+            }
+        },
+        {
+            "path": "pages/my/index",
+            "style": {
+                "navigationBarTitleText": "我的"
+            }
+        },
+        {
+            "path": "pages/courseDetail/index",
+            "style": {
+                "navigationBarTitleText": "方案详情"
+            }
+        },
+        {
+            "path": "pages/novel/index",
+            "style": {
+                "navigationBarTitleText": "小说详情"
+            }
+        },
+		{
+		    "path": "pages/article/index",
+		    "style": {
+		        "navigationBarTitleText": "详情"
+		    }
+		},
+        {
+            "path": "pages/baseForm/index",
+            "style": {
+                "navigationBarTitleText": "基础问卷",
+                "navigationBarBackgroundColor": "#ffebd5"
+            }
+        },
+        {
+            "path": "pages/advancedSurvey/index",
+            "style": {
+                "navigationBarTitleText": "问卷调查",
+                "navigationBarBackgroundColor": "#ffebd5"
+            }
+        },
+        {
+            "path": "pages/banner/index",
+            "style": {
+                "navigationBarTitleText": "",
+                "navigationBarBackgroundColor": "#fff"
+            }
+        },
+		{
+		    "path": "pages/memory/index",
+			"style": {
+			    "navigationBarTitleText": "你述说我采写"
+			}
+		      
+		}
+    ],
+    "globalStyle": {
+        "navigationBarTextStyle": "black",
+        "navigationBarTitleText": "uni-app",
+        "navigationBarBackgroundColor": "#eeeceb",
+        "backgroundColor": "#eeeceb"
+    },
+    "uniIdRouter": {},
+    "tabBar": {
+        "selectedColor": "#22bf8e",
+        "color": "#8a8a8a", // 设置为与背景颜色相同
+        "backgroundColor": "#fff", // 设置为透明
+        "list": [{
+                "pagePath": "pages/home/index"
+            },
+            {
+                "pagePath": "pages/index/index"
+            },
+            {
+                "pagePath": "pages/message/index"
+            },
+            {
+                "pagePath": "pages/my/index"
+            },
+			{
+				 "pagePath": "pages/memory/index"
+		   }
+        ]
+    },
+    "condition": {
+        "current": 0,
+        "list": [{
+            "name": "",
+            "path": "",
+            "query": ""
+        }]
+    },
+	 "subpackages": [
+	    {
+	      "root": "pages/pedigreeMoudle",
+	      "pages": [
+			  {
+			      "path": "share/index",
+			      "style": {
+			          "navigationBarTitleText": "创建成功",
+					  "navigationBarBackgroundColor" :"#FFEBD5"
+			      }
+			  },
+	        {
+	            "path": "pedigreeLogin/index",
+	            "style": {
+	                "navigationBarTitleText": ""
+	            }
+	        },
+	        {
+	            "path": "pedigreeRegister/index",
+	            "style": {
+	                "navigationBarTitleText": "采丁录入",
+					"navigationStyle": "custom"
+	            }
+	        },
+	        {
+	            "path": "addPedigree/index",
+	            "style": {
+	                "navigationBarTitleText": "",
+					 "navigationBarBackgroundColor": "#E8E3D0"
+	            }
+	        },
+	        {
+	            "path": "writePedigree/index",
+	            "style": {
+	                "navigationBarTitleText": "成员信息"
+	            }
+	        },
+	        {
+	            "path": "editPedigree/index",
+	            "style": {
+	                "navigationBarTitleText": ""
+	            }
+	        },
+	        {
+	            "path": "goPedigree/index",
+	            "style": {
+	                "navigationBarTitleText": "组员资料入谱"
+	            }
+	        },
+			{
+			    "path": "openShare/index",
+			    "style": {
+			        "navigationBarTitleText": "家族详情"
+			    }
+			}
+	      ]
+	    },
+		{
+			 "root": "pages/order",
+			 "pages":[
+				 {
+				   "path": "checkout/index",
+				 	"style": {
+				 	"navigationBarTitleText": "用劵买单"
+				  }
+			 }
+			 ]
+		},
+		{
+			 "root": "pages/epitaph",
+			 "pages":[
+				 {
+				   "path": "index",
+				 	"style": {
+				 	"navigationBarTitleText": "最后告白"
+				  }
+			 }
+			 ]
+		},
+		{
+			 "root": "pages/discounts",
+			 "pages":[
+				 {
+				   "path": "index",
+				 	"style": {
+				 	"navigationBarTitleText": "优惠"
+				  }
+			 }
+			 ]
+		},
+		{
+			 "root": "pages/active",
+			 "pages":[
+				 {
+				   "path": "index",
+				 	"style": {
+				 	"navigationBarTitleText": "活动"
+				  }
+			 }
+			 ]
+		},
+		{
+			 "root": "pages/timeImg/",
+			 "pages":[
+				 {
+				   "path": "index/index",
+				 	"style": {
+				 	"navigationBarTitleText": "时光回忆"
+				  }
+			 },
+			 {
+			 				   "path": "edit/index",
+			 				 	"style": {
+			 				 	"navigationBarTitleText": "编辑"
+			 				  }
+			 }
+			 ]
+		}
+	  ]
+}
