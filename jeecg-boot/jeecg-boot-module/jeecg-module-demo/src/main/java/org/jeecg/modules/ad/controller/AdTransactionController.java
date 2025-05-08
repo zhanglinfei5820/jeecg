@@ -8,15 +8,20 @@ import java.util.stream.Collectors;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.common.system.query.QueryRuleEnum;
+import org.jeecg.common.system.util.JwtUtil;
 import org.jeecg.common.util.oConvertUtils;
+import org.jeecg.modules.ad.entity.AdInspection;
+import org.jeecg.modules.ad.entity.AdPublishDetail;
 import org.jeecg.modules.ad.entity.AdTransaction;
 import org.jeecg.modules.ad.entity.Vo.ReportProcessVo;
+import org.jeecg.modules.ad.service.IAdPublishDetailService;
 import org.jeecg.modules.ad.service.IAdTransactionService;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -24,6 +29,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 
+import org.jeecg.modules.ad.service.ICommonLoginUserService;
+import org.jeecg.modules.ad.utils.CommonConstant;
+import org.jeecg.modules.system.entity.SysUser;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
 import org.jeecgframework.poi.excel.entity.ExportParams;
@@ -40,6 +48,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.jeecg.common.aspect.annotation.AutoLog;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.apache.shiro.SecurityUtils;
+import org.jeecg.common.system.vo.LoginUser;
+import org.jeecg.modules.ad.entity.Vo.AdTransactionVO;
+
+import java.util.Calendar;
+import java.util.Date;
+import java.util.LinkedHashMap;
 
  /**
  * @Description: 流水记录表
@@ -54,7 +69,11 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 public class AdTransactionController extends JeecgController<AdTransaction, IAdTransactionService> {
 	@Autowired
 	private IAdTransactionService adTransactionService;
-	
+	@Resource
+	private ICommonLoginUserService commonLoginUserService;
+	@Resource
+	private IAdPublishDetailService iAdPublishDetailService;
+
 	/**
 	 * 分页列表查询
 	 *
@@ -71,7 +90,24 @@ public class AdTransactionController extends JeecgController<AdTransaction, IAdT
 								   @RequestParam(name="pageNo", defaultValue="1") Integer pageNo,
 								   @RequestParam(name="pageSize", defaultValue="10") Integer pageSize,
 								   HttpServletRequest req) {
+		SysUser loginUser = commonLoginUserService.getLoginUserInfo(req);
+		if (loginUser == null) {
+			return Result.error("用户未登录");
+		}
         QueryWrapper<AdTransaction> queryWrapper = QueryGenerator.initQueryWrapper(adTransaction, req.getParameterMap());
+		if (!CommonConstant.ADMIN.equals(loginUser.getUsername())) {
+			List<String> roleCodes = commonLoginUserService.getRoleCode(loginUser);
+			if (roleCodes.contains(CommonConstant.ROLE_CODE_ADCOMPANY)) {
+				QueryWrapper<AdPublishDetail> queryAdPulishWrapper = new QueryWrapper<>();
+				queryAdPulishWrapper.eq("company_id", loginUser.getRelatedId());
+				List<AdPublishDetail> adPublishDetailList = iAdPublishDetailService.list(queryAdPulishWrapper);
+				List<String> publishDetailIdList = adPublishDetailList.stream().map(AdPublishDetail::getId).collect(Collectors.toList());
+				if (publishDetailIdList.isEmpty()) {
+					return Result.OK(new Page<>());
+				}
+				queryWrapper.lambda().in(AdTransaction::getRelatedId,publishDetailIdList);
+			}
+		}
 		Page<AdTransaction> page = new Page<AdTransaction>(pageNo, pageSize);
 		IPage<AdTransaction> pageList = adTransactionService.page(page, queryWrapper);
 		return Result.OK(pageList);
@@ -187,10 +223,77 @@ public class AdTransactionController extends JeecgController<AdTransaction, IAdT
 	  */
 	 @AutoLog(value = "广告上报处理")
 	 @Operation(summary="广告上报处理")
-	 @RequiresPermissions("ad:ad_transaction:reportProcess")
+//	 @RequiresPermissions("ad:ad_transaction:reportProcess")
 	 @PostMapping(value = "/reportProcess")
 	 public Result<String> reportProcess(@Valid @RequestBody ReportProcessVo reportProcessVo) {
 		 return Result.OK(adTransactionService.reportProcess(reportProcessVo));
 	 }
 
+    /**
+     * 小程序-司机流水记录查询
+     * 根据当前登录用户获取司机ID，查询交易记录并按月份分组
+     * 返回最近6个月的交易记录（当月和前5个月）
+     *
+     * @param transactionType 交易类型(0维护金,1提现)，不传表示查询全部
+     * @param yearMonth 指定年月(格式：yyyy-MM)，不传则查询最近6个月
+     * @return 按月份分组的流水记录
+     */
+    @Operation(summary="小程序-司机流水记录查询")
+    @GetMapping(value = "/driverTransactions")
+    public Result<Map<String, List<AdTransactionVO>>> driverTransactions(
+            @RequestParam(name="transactionType", required=false) Integer transactionType,
+            @RequestParam(name="yearMonth", required=false) String yearMonth,HttpServletRequest request) {
+        try {
+			SysUser loginUserInfo = commonLoginUserService.getLoginUserInfo(request);
+			if (loginUserInfo == null) {
+				return Result.error("无效的token或用户未登录");
+			}
+//            // 获取当前登录用户
+//			LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+//            if (sysUser == null) {
+//                return Result.error("未登录或登录已过期");
+//            }
+            
+            // 获取关联的司机ID
+            String driverId = loginUserInfo.getRelatedId();
+            if (driverId == null || driverId.trim().isEmpty()) {
+                return Result.error("用户未关联司机信息");
+            }
+            Map<String, List<AdTransactionVO>> resultMap = new LinkedHashMap<>();
+            
+            // 如果指定了年月，则只查询该月的数据
+            if (yearMonth != null && !yearMonth.trim().isEmpty()) {
+                List<AdTransactionVO> transactions = adTransactionService.getDriverTransactions(driverId, transactionType, yearMonth);
+                resultMap.put(yearMonth, transactions);
+                return Result.OK(resultMap);
+            }
+            
+            // 未指定年月，查询最近6个月数据
+            // 获取当前月份
+            Calendar calendar = Calendar.getInstance();
+            
+            // 处理当前月和前5个月
+            for (int i = 0; i < 6; i++) {
+                // 计算月份（当前月和前5个月）
+                calendar.setTime(new Date());
+                calendar.add(Calendar.MONTH, -i);
+                
+                int year = calendar.get(Calendar.YEAR);
+                int month = calendar.get(Calendar.MONTH) + 1; // Calendar月份从0开始
+                
+                String monthKey = year + "-" + (month < 10 ? "0" + month : month);
+                
+                // 查询当月数据
+                List<AdTransactionVO> monthlyTransactions = adTransactionService.getDriverTransactions(
+                    driverId, transactionType, monthKey);
+                
+                resultMap.put(monthKey, monthlyTransactions);
+            }
+            
+            return Result.OK(resultMap);
+        } catch (Exception e) {
+            log.error("查询司机流水记录失败", e);
+            return Result.error("查询流水记录失败: " + e.getMessage());
+        }
+    }
 }

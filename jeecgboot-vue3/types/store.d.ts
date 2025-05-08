@@ -39,6 +39,7 @@ export interface UserInfo {
   desc?: string;
   homePath?: string;
   tenantid?: string | number;
+  relatedId?: string | number;
   roles: RoleInfo[];
   orgCode?: string;
 }

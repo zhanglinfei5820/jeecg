@@ -27,7 +27,7 @@ export const getImportUrl = Api.importExcel;
  * @param params
  */
 export const list = (params) =>
-  defHttp.get({url: Api.list, params});
+  defHttp.get({url: Api.list+'?type=0', params});
 
 /**
  * 删除单个

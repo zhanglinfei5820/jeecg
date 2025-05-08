@@ -66,6 +66,9 @@
       
       // 调用处理接口
       const result = await reportProcess(params); 
+      // 处理成功后关闭弹窗并刷新
+      closeModal();
+      emit('success');
     } catch (error) {
       console.error('处理上报失败:', error);
       createMessage.error('处理失败，请重试');

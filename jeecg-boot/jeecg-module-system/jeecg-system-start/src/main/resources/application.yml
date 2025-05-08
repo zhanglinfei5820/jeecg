@@ -3,3 +3,6 @@ spring:
     name: jeecg-system
   profiles:
     active: '@profile.name@'
+  # 允许循环依赖（最后手段，不推荐常规使用）
+  main:
+    allow-circular-references: true

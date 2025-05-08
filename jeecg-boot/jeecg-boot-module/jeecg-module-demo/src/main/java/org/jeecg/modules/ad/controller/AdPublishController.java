@@ -8,20 +8,26 @@ import java.util.stream.Collectors;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.common.system.query.QueryRuleEnum;
 import org.jeecg.common.util.oConvertUtils;
 import org.jeecg.modules.ad.entity.AdPublish;
-import org.jeecg.modules.ad.service.IAdPublishService;
+import org.jeecg.modules.ad.entity.AdReport;
+import org.jeecg.modules.ad.service.*;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 
+import org.jeecg.modules.ad.utils.CommonConstant;
+import org.jeecg.modules.system.entity.SysUser;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
 import org.jeecgframework.poi.excel.entity.ExportParams;
@@ -38,6 +44,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import org.jeecg.common.aspect.annotation.AutoLog;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.apache.shiro.SecurityUtils;
+import org.jeecg.common.system.vo.LoginUser;
+import org.jeecg.modules.ad.mapper.AdInspectionMapper;
+import org.jeecg.modules.ad.mapper.AdPublishDetailMapper;
+import org.jeecg.modules.ad.entity.AdPublishDetail;
+import org.jeecg.modules.ad.entity.AdInspection;
+import org.jeecg.modules.ad.entity.Vo.DriverAdVO;
 
  /**
  * @Description: 广告发布表
@@ -52,7 +65,19 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 public class AdPublishController extends JeecgController<AdPublish, IAdPublishService> {
 	@Autowired
 	private IAdPublishService adPublishService;
-	
+	@Resource
+	private AdInspectionMapper adInspectionMapper;
+	@Autowired
+	private IAdInspectionService iAdInspectionService;
+	@Resource
+	private AdPublishDetailMapper adPublishDetailMapper;
+	@Autowired
+	private IAdPublishDetailService iAdPublishDetailService;
+	@Resource
+	private ICommonLoginUserService commonLoginUserService;
+	@Resource
+	private IAdReportService iAdReportService;
+
 	/**
 	 * 分页列表查询
 	 *
@@ -69,7 +94,22 @@ public class AdPublishController extends JeecgController<AdPublish, IAdPublishSe
 								   @RequestParam(name="pageNo", defaultValue="1") Integer pageNo,
 								   @RequestParam(name="pageSize", defaultValue="10") Integer pageSize,
 								   HttpServletRequest req) {
-        QueryWrapper<AdPublish> queryWrapper = QueryGenerator.initQueryWrapper(adPublish, req.getParameterMap());
+		QueryWrapper<AdPublish> queryWrapper = QueryGenerator.initQueryWrapper(adPublish, req.getParameterMap());
+		SysUser loginUserInfo = commonLoginUserService.getLoginUserInfo(req);
+		if (loginUserInfo == null) {
+			return Result.error("用户未登录");
+		}
+		if (!CommonConstant.ADMIN.equals(loginUserInfo.getUsername())){
+			List<String> roleCodeList = commonLoginUserService.getRoleCode(loginUserInfo);
+			if (CollectionUtils.isEmpty(roleCodeList)){
+				return Result.error("用户未绑定角色");
+			}
+			if (roleCodeList.contains(CommonConstant.ROLE_CODE_ADVERTISERS)) {
+				// 广告方
+				queryWrapper.eq("merchant_id", loginUserInfo.getRelatedId());
+			}
+		}
+
         // 添加商户ID查询条件
         String merchantId = req.getParameter("merchantId");
         if (oConvertUtils.isNotEmpty(merchantId)) {
@@ -105,6 +145,135 @@ public class AdPublishController extends JeecgController<AdPublish, IAdPublishSe
 		Page<AdPublish> page = new Page<AdPublish>(pageNo, pageSize);
 		IPage<AdPublish> pageList = adPublishService.page(page, queryWrapper);
 		return Result.OK(pageList);
+	}
+	
+	/**
+	 * 广告统计接口
+	 *
+	 * @return 返回包含广告总数、年检待安装、破损待处理、有效期的统计数据
+	 */
+	@AutoLog(value = "广告发布表-广告统计")
+	@Operation(summary="广告发布表-广告统计")
+	@GetMapping(value = "/statistics")
+	public Result<Map<String, Long>> getAdStatistics() {
+		Map<String, Long> result = new HashMap<>(4);
+		long totalCount = 0;
+		long validCount = 0;
+		long inspectionPendingCount = 0;
+		long damagePendingCount = 0;
+		
+		// 获取当前登录用户
+		LoginUser loginUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
+		if (loginUser == null) {
+			return Result.error("用户未登录");
+		}
+		
+		String userId = loginUser.getRelatedId();
+		String roleCode = loginUser.getRoleCode();
+		
+		try {
+			// 根据角色区分查询逻辑
+			if (CommonConstant.ROLE_CODE_ADVERTISERS.contains(roleCode)) {
+				// 1. 商户角色
+				// 1.1 广告总数：查询商户发布的广告
+				QueryWrapper<AdPublish> queryWrapper = new QueryWrapper<>();
+				queryWrapper.eq("merchant_id", userId);
+				totalCount = adPublishService.count(queryWrapper);
+				
+				// 1.2 有效期：状态为1或4的广告
+//				QueryWrapper<AdPublish> validQueryWrapper = new QueryWrapper<>();
+//				validQueryWrapper.eq("merchant_id", userId);
+//				validQueryWrapper.in("status", Arrays.asList(1, 4));
+//				validCount = adPublishService.count(validQueryWrapper);
+
+				// 获取商户所有广告的ID列表
+				List<AdPublish> adPublishList = adPublishService.list(queryWrapper);
+				List<String> adIdList = adPublishList.stream().map(AdPublish::getId).collect(Collectors.toList());
+
+				// 1.2 即将过期
+				QueryWrapper<AdReport> adReportQueryWrapper = new QueryWrapper<>();
+				adReportQueryWrapper.lambda().eq(AdReport::getStatus,0).in(AdReport::getId, adIdList);
+				validCount = iAdReportService.count(adReportQueryWrapper);
+				
+				if (!adIdList.isEmpty()) {
+					// 1.3 年检待安装：type为0的数据
+					QueryWrapper<AdInspection> inspectionQueryWrapper = new QueryWrapper<>();
+					inspectionQueryWrapper.in("ad_id", adIdList);
+					inspectionQueryWrapper.eq("type", "0");
+//					inspectionPendingCount = iAdInspectionService.count(inspectionQueryWrapper);
+					inspectionPendingCount = adInspectionMapper.selectCount(inspectionQueryWrapper);
+					
+					// 1.4 破损待处理：type为1的数据
+					QueryWrapper<AdInspection> damageQueryWrapper = new QueryWrapper<>();
+					damageQueryWrapper.in("ad_id", adIdList);
+					damageQueryWrapper.eq("type", "1");
+//					damagePendingCount = iAdInspectionService.count(damageQueryWrapper);
+					damagePendingCount = adInspectionMapper.selectCount(damageQueryWrapper);
+				}
+			} else if (CommonConstant.ROLE_CODE_ADCOMPANY.contains(roleCode)) {
+				// 2. 公司角色
+				// 2.1 广告总数：查询公司下的广告
+				QueryWrapper<AdPublishDetail> queryWrapper = new QueryWrapper<>();
+				queryWrapper.eq("company_id", userId);
+				queryWrapper.eq("type", 0);
+//				totalCount = iAdPublishDetailService.count(queryWrapper);
+				totalCount = adPublishDetailMapper.selectCount(queryWrapper);
+
+				// 2.2 有效期：状态为1或4的广告
+				QueryWrapper<AdPublishDetail> validQueryWrapper = new QueryWrapper<>();
+				validQueryWrapper.eq("company_id", userId);
+				validQueryWrapper.eq("type", 0);
+				validQueryWrapper.in("status", Arrays.asList(1, 4));
+//				validCount = iAdPublishDetailService.count(validQueryWrapper);
+				validCount = adPublishDetailMapper.selectCount(validQueryWrapper);
+
+				// 获取公司所有广告明细的ID列表
+				List<AdPublishDetail> publishDetailList = adPublishDetailMapper.selectList(queryWrapper);
+				List<String> publishIdList = publishDetailList.stream().map(AdPublishDetail::getPublishId).collect(Collectors.toList());
+				
+				if (!publishIdList.isEmpty()) {
+					// 2.3 年检待安装：type为0的数据
+					QueryWrapper<AdInspection> inspectionQueryWrapper = new QueryWrapper<>();
+					inspectionQueryWrapper.in("ad_id", publishIdList);
+					inspectionQueryWrapper.eq("type", "0");
+//					inspectionPendingCount = iAdInspectionService.count(inspectionQueryWrapper);
+					inspectionPendingCount = adInspectionMapper.selectCount(inspectionQueryWrapper);
+
+					// 2.4 破损待处理：type为1的数据
+					QueryWrapper<AdInspection> damageQueryWrapper = new QueryWrapper<>();
+					damageQueryWrapper.in("ad_id", publishIdList);
+					damageQueryWrapper.eq("type", "1");
+//					damagePendingCount = iAdInspectionService.count(damageQueryWrapper);
+					damagePendingCount = adInspectionMapper.selectCount(damageQueryWrapper);
+				}
+			} else {
+				// 管理员或其他角色，不做限制，获取全部数据
+//				totalCount = adPublishService.count();
+//
+//				QueryWrapper<AdPublish> validQueryWrapper = new QueryWrapper<>();
+//				validQueryWrapper.in("status", Arrays.asList(1, 4));
+//				validCount = adPublishService.count(validQueryWrapper);
+//
+//				QueryWrapper<AdInspection> inspectionQueryWrapper = new QueryWrapper<>();
+//				inspectionQueryWrapper.eq("type", "0");
+//				inspectionPendingCount = adInspectionMapper.selectCount(inspectionQueryWrapper);
+//
+//				QueryWrapper<AdInspection> damageQueryWrapper = new QueryWrapper<>();
+//				damageQueryWrapper.eq("type", "1");
+//				damagePendingCount = adInspectionMapper.selectCount(damageQueryWrapper);
+			}
+			
+			// 封装结果
+			result.put("totalCount", totalCount);
+			result.put("validCount", validCount);
+			result.put("inspectionPendingCount", inspectionPendingCount);
+			result.put("damagePendingCount", damagePendingCount);
+			
+			return Result.OK(result);
+		} catch (Exception e) {
+			log.error("广告统计获取失败", e);
+			return Result.error("广告统计获取失败: " + e.getMessage());
+		}
 	}
 	
 	/**
@@ -209,4 +378,34 @@ public class AdPublishController extends JeecgController<AdPublish, IAdPublishSe
         return super.importExcel(request, response, AdPublish.class);
     }
 
+	/**
+	 * 小程序司机查询广告接口
+	 * 
+	 * @return 广告信息列表
+	 */
+	@AutoLog(value = "广告发布表-司机查询广告")
+	@Operation(summary="广告发布表-司机查询广告")
+	@GetMapping(value = "/driverAds")
+	public Result<List<AdPublish>> driverAds(HttpServletRequest request) {
+		try {
+			// 获取当前登录用户
+			SysUser loginUser = commonLoginUserService.getLoginUserInfo(request);
+			if (loginUser == null) {
+				return Result.error("用户未登录");
+			}
+
+			// 从登录用户获取手机号
+			String phone = loginUser.getPhone();
+			if (phone == null || phone.trim().isEmpty()) {
+				return Result.error("手机号不存在");
+			}
+			// 查询广告信息
+			List<AdPublish> adList = adPublishService.getDriverAds(phone);
+			
+			return Result.OK(adList);
+		} catch (Exception e) {
+			log.error("司机查询广告失败", e);
+			return Result.error("查询失败: " + e.getMessage());
+		}
+	}
 }

@@ -8,7 +8,7 @@
               <a-form-item label="所属司机" v-bind="validateInfos.driverName" id="AdVehicleForm-driverName" name="driverName">
                 <j-search-select
                   v-model:value="formData.driverName"
-                  dict="ad_driver,name,id,status=1"
+                  :dict="getUserRelatedDriverDict()"
                   placeholder="请选择司机"
                   @change="handleDriverChange"
                 />
@@ -23,7 +23,7 @@
               <a-form-item label="公司名称" v-bind="validateInfos.companyName" id="AdVehicleForm-companyName" name="companyName">
                 <j-search-select
                   v-model:value="formData.companyName"
-                  dict="ad_company,name,id,status=1"
+                  :dict="getCompanyRelatedCompanyDict()"
                   placeholder="请选择公司"
                   @change="handleCompanyChange"
                 />
@@ -34,11 +34,11 @@
                 <a-input v-model:value="formData.companyId" placeholder="请输入公司id" disabled></a-input>
               </a-form-item>
             </a-col>
-            <a-col :span="24">
+            <!-- <a-col :span="24">
               <a-form-item label="广告名称" v-bind="validateInfos.adName" id="AdVehicleForm-adName" name="adName">
                 <j-search-select
                   v-model:value="formData.adName"
-                  dict="ad_publish,title,id,status=1"
+                  dict="ad_publish,name,id,status=1"
                   placeholder="请选择广告"
                   @change="handleAdPublishChange"
                 />
@@ -48,7 +48,7 @@
               <a-form-item label="广告id" v-bind="validateInfos.adId" id="AdVehicleForm-adId" name="adId">
                 <a-input v-model:value="formData.adId" placeholder="广告id" disabled></a-input>
               </a-form-item>
-            </a-col>
+            </a-col> -->
 						<a-col :span="24">
 							<a-form-item label="车牌号码" v-bind="validateInfos.plateNumber" id="AdVehicleForm-plateNumber" name="plateNumber">
 								<a-input v-model:value="formData.plateNumber" placeholder="请输入车牌号码"  allow-clear ></a-input>
@@ -56,7 +56,7 @@
 						</a-col>
 						<a-col :span="24">
 							<a-form-item label="车辆类型" v-bind="validateInfos.vehicleType" id="AdVehicleForm-vehicleType" name="vehicleType">
-								<j-dict-select-tag v-model:value="formData.vehicleType" placeholder="请输入车辆类型" dictCode="ad_vehicle_type"  allow-clear />
+								<j-dict-select-tag v-model:value="formData.vehicleType" placeholder="请输入车辆类型" dictCode="ad_vehicle_type" allow-clear stringToNumber />
 							</a-form-item>
 						</a-col>
 						<a-col :span="24">
@@ -75,13 +75,18 @@
 							</a-form-item>
 						</a-col>
 						<a-col :span="24">
+							<a-form-item label="车辆图片" v-bind="validateInfos.vehicleImage" id="AdVehicleForm-vehicleImage" name="vehicleImage">
+								<JImageUpload v-model:value="formData.vehicleImage" :maxCount="1" allow-clear :previewBeforeUpload="true" />
+							</a-form-item>
+						</a-col>
+						<a-col :span="24">
 							<a-form-item label="行驶证号" v-bind="validateInfos.vehicleLicense" id="AdVehicleForm-vehicleLicense" name="vehicleLicense">
 								<a-input v-model:value="formData.vehicleLicense" placeholder="请输入行驶证号"  allow-clear ></a-input>
 							</a-form-item>
 						</a-col>
 						<a-col :span="24">
 							<a-form-item label="行驶证图片" v-bind="validateInfos.licenseImage" id="AdVehicleForm-licenseImage" name="licenseImage">
-								<JImageUpload v-model:value="formData.licenseImage" :maxCount="1" />
+								<JImageUpload v-model:value="formData.licenseImage" :maxCount="1" :previewBeforeUpload="true" />
 							</a-form-item>
 						</a-col>
 						<a-col :span="24">
@@ -99,6 +104,7 @@
 								<a-date-picker
 									v-model:value="formData.installationTime"
 									show-time
+									value-format="YYYY-MM-DD HH:mm:ss"
 									format="YYYY-MM-DD HH:mm:ss"
 									placeholder="请选择安装时间"
 									style="width: 100%"
@@ -107,7 +113,7 @@
 						</a-col>
             <a-col :span="24">
               <a-form-item label="安装图片" v-bind="validateInfos.installationImage" id="AdVehicleForm-installationImage" name="installationImage">
-                <JUpload v-model:value="formData.installationImage" :maxCount="1" />
+                <JUpload v-model:value="formData.installationImage" :maxCount="1" :preview="true" />
               </a-form-item>
             </a-col>
 						<a-col :span="24">
@@ -135,6 +141,8 @@
   import JImageUpload from '/@/components/Form/src/jeecg/components/JImageUpload.vue';
   import JUpload from '/@/components/Form/src/jeecg/components/JUpload/JUpload.vue';
   import { SearchOutlined } from '@ant-design/icons-vue';
+  import { useUserStore } from '/@/store/modules/user';
+  import dayjs from 'dayjs';
   const props = defineProps({
     formDisabled: { type: Boolean, default: false },
     formData: { type: Object, default: () => ({})},
@@ -155,11 +163,13 @@
     brand: '',   
     model: '',   
     color: '',   
+    vehicleImage: '',
     vehicleLicense: '',   
     licenseImage: '',   
     status: undefined,
     windowArea: undefined,
     remark: '',   
+    installationImage: '',
   });
   const { createMessage } = useMessage();
   const labelCol = ref<any>({ xs: { span: 24 }, sm: { span: 5 } });
@@ -205,13 +215,43 @@
       const tmpData = {};
       Object.keys(formData).forEach((key) => {
         if(record.hasOwnProperty(key)){
-          tmpData[key] = record[key]
+          // 处理日期格式
+          if (key === 'installationTime' && record[key]) {
+            tmpData[key] = record[key];
+          } else {
+            tmpData[key] = record[key];
+          }
         }
       })
       //赋值
       Object.assign(formData, tmpData);
-      // 如果是编辑状态，加载数据字典值
+      
+      // 如果是编辑状态，加载数据字典值和关联数据
       if (record.id) {
+        // 处理公司名称回显
+        if (record.companyId) {
+          try {
+            const companyRes = await defHttp.get({ url: `/ad/adCompany/queryById`, params: { id: record.companyId } });
+            if (companyRes) {
+              formData.companyName = companyRes.name;
+            }
+          } catch (error) {
+            console.error('加载公司信息失败:', error);
+          }
+        }
+        
+        // 处理司机名称回显
+        if (record.driverId) {
+          try {
+            const driverRes = await defHttp.get({ url: `/ad/adDriver/queryById`, params: { id: record.driverId } });
+            if (driverRes) {
+              formData.driverName = driverRes.name;
+            }
+          } catch (error) {
+            console.error('加载司机信息失败:', error);
+          }
+        }
+        
         // 加载类型和状态的数据字典值
         const [statusDict] = await Promise.all([
           defHttp.get({ url: '/sys/dict/getDictItems/ad_status' })
@@ -222,7 +262,6 @@
             formData.status = statusItem.value;
           }
         }
-        
       }
     });
   }
@@ -247,10 +286,16 @@
     confirmLoading.value = true;
     const isUpdate = ref<boolean>(false);
     //时间格式化
-    let model = formData;
+    let model = { ...formData };
     if (model.id) {
       isUpdate.value = true;
     }
+    
+    // 处理日期格式
+    if (model.installationTime && typeof model.installationTime !== 'string') {
+      model.installationTime = dayjs(model.installationTime).format('YYYY-MM-DD HH:mm:ss');
+    }
+    
     //循环数据
     for (let data in model) {
       //如果该数据是数组并且是字符串类型
@@ -470,7 +515,7 @@
         const res = await defHttp.get({ url: `/ad/adPublish/queryById`, params: { id: value } });
         if (res) {
           formData.adId = value;
-          formData.adName = res.title;
+          formData.adName = res.name;
         }
       } catch (error) {
         console.error('获取广告信息失败:', error);
@@ -481,6 +526,29 @@
       formData.adId = value.value;
     }
   };
+
+  // 根据用户relatedId设置司机字典
+  const getUserRelatedDriverDict = () => {
+    const userStore = useUserStore();
+    const userInfo = userStore.getUserInfo;
+    const relatedId = userInfo.relatedId;
+    let dictCode = "ad_driver,name,id,status=1";
+    if (relatedId) {
+      dictCode = `ad_driver,name,id,status=1 and create_by=`+relatedId;
+    }
+    return dictCode;
+  };
+  const getCompanyRelatedCompanyDict = () => {
+    const userStore = useUserStore();
+    const userInfo = userStore.getUserInfo;
+    const relatedId = userInfo.relatedId;
+    let dictCode = "ad_company,name,id,status=1";
+    if (relatedId) {
+      dictCode = `ad_company,name,id,status=1 and id=`+relatedId;
+    }
+    return dictCode;
+  };
+
 
   defineExpose({
     add,

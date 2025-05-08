@@ -6,6 +6,8 @@ import { registerJVxeCustom } from '/@/components/JVxeCustom';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+import localeData from 'dayjs/plugin/localeData';
+import 'dayjs/locale/zh-cn';
 import { createAsyncComponent } from '/@/utils/factory/createAsyncComponent';
 
 export async function registerThirdComp(app: App) {
@@ -35,6 +37,7 @@ export async function registerThirdComp(app: App) {
   // update-end--author:liaozhiyang---date:20240308---for：【QQYUN-8241】emoji-mart-vue-fast库异步加载
   //---------------------------------------------------------------------
   // 注册全局dayjs
+  dayjs.extend(localeData);
   dayjs.locale('zh-cn');
   dayjs.extend(relativeTime);
   dayjs.extend(customParseFormat);

@@ -102,4 +102,8 @@ public class AdMaterial implements Serializable {
 	@Excel(name = "备注", width = 15)
     @Schema(description = "备注")
     private java.lang.String remark;
+	/**广告公司id*/
+	@Excel(name = "广告公司id", width = 15)
+    @Schema(description = "广告公司id")
+    private java.lang.String merchantId;
 }

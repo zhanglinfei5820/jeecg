@@ -84,7 +84,7 @@ public class AdPublishDetail implements Serializable {
 	/**广告标题*/
 	@Excel(name = "广告标题", width = 15)
     @Schema(description = "广告标题")
-    private java.lang.String title;
+    private java.lang.String name;
 	/**单价(元/天)*/
 	@Excel(name = "单价(元/天)", width = 15)
     @Schema(description = "单价(元/天)")
@@ -92,12 +92,12 @@ public class AdPublishDetail implements Serializable {
 	/**状态(0禁用,1启用)*/
 	@Excel(name = "状态(0禁用,1启用)", width = 15)
     @Schema(description = "状态(0禁用,1启用)")
-    @Dict(dicCode = "ad_publish_status")
+    @Dict(dicCode = "ad_publish_detail_status")
     private java.lang.Integer status;
 	/**公司id*/
 	@Excel(name = "公司id", width = 15)
     @Schema(description = "公司id")
-    private java.lang.Integer companyId;
+    private java.lang.String companyId;
 	/**公司名称*/
 	@Excel(name = "公司名称", width = 15)
     @Schema(description = "公司名称")

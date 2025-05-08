@@ -8,8 +8,11 @@ import java.util.stream.Collectors;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.common.system.query.QueryRuleEnum;
@@ -22,7 +25,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 
+import org.jeecg.modules.ad.service.ICommonLoginUserService;
 import org.jeecg.modules.ad.utils.CommonConstant;
+import org.jeecg.modules.system.entity.SysUser;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
 import org.jeecgframework.poi.excel.entity.ExportParams;
@@ -53,6 +58,8 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 public class AdMerchantController extends JeecgController<AdMerchant, IAdMerchantService> {
 	@Autowired
 	private IAdMerchantService adMerchantService;
+	 @Resource
+	 private ICommonLoginUserService commonLoginUserService;
 	
 	/**
 	 * 分页列表查询
@@ -75,7 +82,36 @@ public class AdMerchantController extends JeecgController<AdMerchant, IAdMerchan
 		IPage<AdMerchant> pageList = adMerchantService.page(page, queryWrapper);
 		return Result.OK(pageList);
 	}
-	
+	/**
+	 * 分页列表查询
+	 *
+	 * @param adMerchant
+	 * @param req
+	 * @return
+	 */
+	//@AutoLog(value = "商户表（发布方）-列表查询")
+	@Operation(summary="商户表（发布方）-列表查询")
+	@GetMapping(value = "/queryList")
+	public Result<?> queryList(AdMerchant adMerchant,
+								   HttpServletRequest req) {
+		QueryWrapper<AdMerchant> queryWrapper = QueryGenerator.initQueryWrapper(adMerchant, req.getParameterMap());
+		SysUser loginUserInfo = commonLoginUserService.getLoginUserInfo(req);
+		if (loginUserInfo == null) {
+			return Result.error("用户未登录");
+		}
+		if (!CommonConstant.ADMIN.equals(loginUserInfo.getUsername())){
+			List<String> roleCodeList = commonLoginUserService.getRoleCode(loginUserInfo);
+			if (CollectionUtils.isEmpty(roleCodeList)){
+				return Result.error("用户未绑定角色");
+			}
+			if (roleCodeList.contains(CommonConstant.ROLE_CODE_ADVERTISERS)) {
+				// 广告方
+				queryWrapper.eq("merchant_id", loginUserInfo.getRelatedId());
+			}
+		}
+		return Result.OK(adMerchantService.list(queryWrapper));
+	}
+
 	/**
 	 *   添加
 	 *

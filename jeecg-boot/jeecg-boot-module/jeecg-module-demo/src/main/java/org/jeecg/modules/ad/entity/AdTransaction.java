@@ -60,6 +60,10 @@ public class AdTransaction implements Serializable {
 	@Excel(name = "司机ID", width = 15)
     @Schema(description = "司机ID")
     private java.lang.String driverId;
+	/**抽成*/
+	@Excel(name = "抽成", width = 15)
+    @Schema(description = "抽成")
+    private BigDecimal percentage;
 	/**金额*/
 	@Excel(name = "金额", width = 15)
     @Schema(description = "金额")

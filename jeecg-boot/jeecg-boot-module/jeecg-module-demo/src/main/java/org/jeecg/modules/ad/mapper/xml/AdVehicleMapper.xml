@@ -2,4 +2,283 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.jeecg.modules.ad.mapper.AdVehicleMapper">
 
+    <!-- 查询结果映射 -->
+    <resultMap id="AdVehicleVOResultMap" type="org.jeecg.modules.ad.entity.Vo.AdVehicleVO">
+        <id column="id" property="id"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="sys_org_code" property="sysOrgCode"/>
+        <result column="installation_time" property="installationTime"/>
+        <result column="ad_id" property="adId"/>
+        <result column="ad_name" property="adName"/>
+        <result column="company_id" property="companyId"/>
+        <result column="company_name" property="companyName"/>
+        <result column="driver_id" property="driverId"/>
+        <result column="driver_name" property="driverName"/>
+        <result column="plate_number" property="plateNumber"/>
+        <result column="vehicle_type" property="vehicleType"/>
+        <result column="brand" property="brand"/>
+        <result column="model" property="model"/>
+        <result column="color" property="color"/>
+        <result column="vehicle_license" property="vehicleLicense"/>
+        <result column="license_image" property="licenseImage"/>
+        <result column="status" property="status"/>
+        <result column="window_area" property="windowArea"/>
+        <result column="remark" property="remark"/>
+        <result column="installation_image" property="installationImage"/>
+        <result column="maintenance_count" property="maintenanceCount"/>
+        <result column="expire_time" property="expireTime"/>
+        <result column="vehicle_image" property="vehicleImage"/>
+    </resultMap>
+
+    <!-- 分页查询车辆信息，直接关联查询广告名称、公司名称和司机名称 -->
+    <select id="queryVehiclePageList" resultMap="AdVehicleVOResultMap" parameterType="java.util.Map">
+        SELECT
+            v.*,
+            p.name as ad_name,
+            m.name as company_name,
+            d.name as driver_name
+        FROM
+            ad_vehicle v
+        LEFT JOIN
+            ad_publish p ON v.ad_id = p.id
+        LEFT JOIN
+            ad_merchant m ON v.company_id = m.id
+        LEFT JOIN
+            ad_driver d ON v.driver_id = d.id
+        <where>
+            <if test="params.plateNumber != null and params.plateNumber != ''">
+                AND v.plate_number LIKE CONCAT('%', #{params.plateNumber}, '%')
+            </if>
+            <if test="params.keyword != null and params.keyword != ''">
+                AND (
+                    v.plate_number LIKE CONCAT('%', #{params.keyword}, '%')
+                    OR p.name LIKE CONCAT('%', #{params.keyword}, '%')
+                    OR m.name LIKE CONCAT('%', #{params.keyword}, '%')
+                    OR d.name LIKE CONCAT('%', #{params.keyword}, '%')
+                )
+            </if>
+            <if test="params.companyId != null">
+                AND v.company_id = #{params.companyId}
+            </if>
+            <if test="params.vehicleType != null">
+                AND v.vehicle_type = #{params.vehicleType}
+            </if>
+            <if test="params.brand != null and params.brand != ''">
+                AND v.brand LIKE CONCAT('%', #{params.brand}, '%')
+            </if>
+            <if test="params.status != null">
+                AND v.status = #{params.status}
+            </if>
+            <if test="params.driverName != null and params.driverName != ''">
+                AND d.name LIKE CONCAT('%', #{params.driverName}, '%')
+            </if>
+            <if test="params.adName != null and params.adName != ''">
+                AND p.name LIKE CONCAT('%', #{params.adName}, '%')
+            </if>
+            <if test="params.companyName != null and params.companyName != ''">
+                AND m.name LIKE CONCAT('%', #{params.companyName}, '%')
+            </if>
+            <!-- 增加根据所属部门的筛选条件 -->
+            <if test="params.sysOrgCode != null and params.sysOrgCode != ''">
+                AND v.sys_org_code LIKE CONCAT(#{params.sysOrgCode}, '%')
+            </if>
+        </where>
+        ORDER BY v.create_time DESC
+    </select>
+    
+    <!-- 车辆管理查询列表 -->
+    <select id="queryVxList" resultMap="AdVehicleVOResultMap" parameterType="java.util.Map">
+        SELECT
+            v.*,
+            p.name as ad_name,
+            m.name as company_name,
+            d.name as driver_name,
+            d.phone
+        FROM
+            ad_vehicle v
+        LEFT JOIN
+            ad_publish p ON v.ad_id = p.id
+        LEFT JOIN
+            ad_merchant m ON v.company_id = m.id
+        LEFT JOIN
+            ad_driver d ON v.driver_id = d.id
+        <where>
+            <if test="params.plateNumber != null and params.plateNumber != ''">
+                AND v.plate_number LIKE CONCAT('%', #{params.plateNumber}, '%')
+            </if>
+            <if test="params.keyword != null and params.keyword != ''">
+                AND (
+                v.plate_number LIKE CONCAT('%', #{params.keyword}, '%')
+                OR p.name LIKE CONCAT('%', #{params.keyword}, '%')
+                OR m.name LIKE CONCAT('%', #{params.keyword}, '%')
+                OR d.name LIKE CONCAT('%', #{params.keyword}, '%')
+                )
+            </if>
+            <!-- VO对象中的额外查询条件 -->
+            <if test="params.adName != null and params.adName != ''">
+                AND p.name LIKE CONCAT('%', #{params.adName}, '%')
+            </if>
+            <if test="params.merchantId != null and params.merchantId != ''">
+                AND p.merchant_id = #{params.merchantId}
+            </if>
+            <if test="params.companyName != null and params.companyName != ''">
+                AND m.name LIKE CONCAT('%', #{params.companyName}, '%')
+            </if>
+            <if test="params.driverName != null and params.driverName != ''">
+                AND d.name LIKE CONCAT('%', #{params.driverName}, '%')
+            </if>
+            <if test="params.vehicleType != null">
+                AND v.vehicle_type = #{params.vehicleType}
+            </if>
+            <if test="params.brand != null and params.brand != ''">
+                AND v.brand LIKE CONCAT('%', #{params.brand}, '%')
+            </if>
+            <if test="params.status != null">
+                AND v.status = #{params.status}
+            </if>
+            <!-- 根据不同角色设置不同的查询条件 -->
+            <if test="params.adId != null and params.adId != ''">
+                AND v.ad_id = #{params.adId}
+            </if>
+            <if test="params.companyId != null and params.companyId != ''">
+                AND v.company_id = #{params.companyId}
+            </if>
+            <if test="params.driverId != null and params.driverId != ''">
+                AND v.driver_id = #{params.driverId}
+            </if>
+            <!-- 增加根据所属部门的筛选条件 -->
+            <if test="params.sysOrgCode != null and params.sysOrgCode != ''">
+                AND v.sys_org_code LIKE CONCAT(#{params.sysOrgCode}, '%')
+            </if>
+            <!-- 增加安装日期范围筛选 -->
+            <if test="params.installationTimeStart != null">
+                AND v.installation_time >= #{params.installationTimeStart}
+            </if>
+            <if test="params.installationTimeEnd != null">
+                AND v.installation_time &lt;= #{params.installationTimeEnd}
+            </if>
+        </where>
+        ORDER BY 
+        <choose>
+            <when test="params.orderBy != null and params.orderBy != ''">
+                v.installation_time ASC
+            </when>
+            <otherwise>
+                v.installation_time DESC
+            </otherwise>
+        </choose>
+    </select>
+    
+    <!-- 小程序年检维护分页查询，多表联查 -->
+    <select id="queryInspectionMaintenancePageList" resultMap="AdVehicleVOResultMap" parameterType="java.util.Map">
+        SELECT
+            v.id,
+            v.plate_number,
+            v.vehicle_type,
+            v.brand,
+            v.model,
+            v.color,
+            v.status,
+            v.installation_time,
+            v.installation_image,
+            v.maintenance_count,
+            v.vehicle_image,
+            m.name as company_name,
+            p.name as ad_name,
+            p.launch_end_time as expire_time,
+            v.create_time,
+            v.update_time,
+            v.sys_org_code,
+            v.ad_id,
+            v.company_id,
+            v.driver_id,
+            d.phone,
+            d.name as driver_name
+        FROM
+            ad_vehicle v
+        LEFT JOIN
+            ad_inspection i ON v.id = i.vehicle_id
+        LEFT JOIN
+            ad_publish p ON v.ad_id = p.id
+        LEFT JOIN
+            ad_merchant m ON v.company_id = m.id
+        LEFT JOIN
+        ad_driver d ON v.driver_id = d.id
+        <where>
+            <!-- 年检类型是必须条件字段 -->
+            <if test="params.inspectionType != null and params.inspectionType != ''">
+                AND i.type = #{params.inspectionType}
+            </if>
+            <!-- 车辆基本信息筛选 -->
+            <if test="params.plateNumber != null and params.plateNumber != ''">
+                AND v.plate_number LIKE CONCAT('%', #{params.plateNumber}, '%')
+            </if>
+            <if test="params.vehicleType != null">
+                AND v.vehicle_type = #{params.vehicleType}
+            </if>
+            <if test="params.status != null">
+                AND v.status = #{params.status}
+            </if>
+            <!-- 关联信息筛选 -->
+            <if test="params.companyName != null and params.companyName != ''">
+                AND m.name LIKE CONCAT('%', #{params.companyName}, '%')
+            </if>
+            <if test="params.adName != null and params.adName != ''">
+                AND p.name LIKE CONCAT('%', #{params.adName}, '%')
+            </if>
+            <!-- 关键字搜索 -->
+            <if test="params.keyword != null and params.keyword != ''">
+                AND (
+                    v.plate_number LIKE CONCAT('%', #{params.keyword}, '%')
+                    OR p.name LIKE CONCAT('%', #{params.keyword}, '%')
+                    OR m.name LIKE CONCAT('%', #{params.keyword}, '%')
+                )
+            </if>
+            <!-- 权限控制 -->
+            <if test="params.adId != null and params.adId != ''">
+                AND v.ad_id = #{params.adId}
+            </if>
+            <if test="params.companyId != null and params.companyId != ''">
+                AND v.company_id = #{params.companyId}
+            </if>
+            <if test="params.driverId != null and params.driverId != ''">
+                AND v.driver_id = #{params.driverId}
+            </if>
+            <!-- 增加到期日期范围筛选 -->
+            <if test="params.expireTime != null">
+                AND v.status in (1,4)
+            </if>
+            <!--<if test="params.expireTime != null">
+                AND v.expire_time >= #{params.expireTime}
+            </if>
+            <if test="params.expireTime != null">
+                AND v.expire_time &lt;= #{params.expireTime}
+            </if>-->
+            <if test="params.adIdList != null and params.adIdList.size > 0">
+                AND v.ad_id IN
+                <foreach item="ad_id" collection="params.adIdList" open="(" separator="," close=")">
+                    #{ad_id}
+                </foreach>
+            </if>
+            <!-- 组织机构权限 -->
+<!--            <if test="params.sysOrgCode != null and params.sysOrgCode != ''">-->
+<!--                AND v.sys_org_code LIKE CONCAT(#{params.sysOrgCode}, '%')-->
+<!--            </if>-->
+        </where>
+        ORDER BY
+        <choose>
+            <when test="params.orderBy != null and params.orderBy != ''">
+                v.installation_time ASC
+            </when>
+            <otherwise>
+                v.installation_time DESC
+            </otherwise>
+        </choose>
+<!--        GROUP BY v.id  &lt;!&ndash; 对车辆ID进行分组，避免重复数据 &ndash;&gt;-->
+<!--        ORDER BY p.launch_end_time ASC, v.create_time DESC-->
+    </select>
+
 </mapper>

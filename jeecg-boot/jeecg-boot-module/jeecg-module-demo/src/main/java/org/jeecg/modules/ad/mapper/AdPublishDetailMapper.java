@@ -1,10 +1,14 @@
 package org.jeecg.modules.ad.mapper;
 
-import java.util.List;
+import java.util.Map;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Param;
 import org.jeecg.modules.ad.entity.AdPublishDetail;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.jeecg.modules.ad.entity.Vo.AdPublishDetailVO;
+import org.jeecg.modules.ad.entity.Vo.AdVehicleVO;
 
 /**
  * @Description: 广告发布明细表
@@ -14,4 +18,5 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  */
 public interface AdPublishDetailMapper extends BaseMapper<AdPublishDetail> {
 
+    IPage<AdPublishDetailVO> queryPulishDetailPageList(Page<AdPublishDetailVO> page, Map<String, Object> queryParams);
 }

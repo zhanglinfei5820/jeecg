@@ -103,7 +103,7 @@ public class AdPublish implements Serializable {
 	/**状态(0待审核,1已发布,2已结束,3已取消)*/
 	@Excel(name = "状态", width = 15, dicCode = "ad_publish_status")
 	@Dict(dicCode = "ad_publish_status")
-    @Schema(description = "状态(0待审核,1已发布,2已结束,3已取消)")
+    @Schema(description = "状态(0待审核,1已发布,2已结束,3已取消4已满员)")
     private Integer status;
 	/**安装时间*/
 	@Excel(name = "安装时间", width = 20, format = "yyyy-MM-dd HH:mm:ss")
@@ -134,4 +134,8 @@ public class AdPublish implements Serializable {
     @Schema(description = "单价")
     @Min(value = 0, message = "单价不能为负数")
     private BigDecimal price;
+	/**实际司机数*/
+	@Excel(name = "实际司机数", width = 15)
+    @Schema(description = "实际司机数")
+    private BigDecimal actualDrivers;
 }

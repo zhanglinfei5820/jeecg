@@ -16,21 +16,6 @@ export const columns: BasicColumn[] = [
     dataIndex: 'amount'
    },
    {
-    title: '银行名称',
-    align:"center",
-    dataIndex: 'bankName'
-   },
-   {
-    title: '银行账号',
-    align:"center",
-    dataIndex: 'bankAccount'
-   },
-   {
-    title: '开户名',
-    align:"center",
-    dataIndex: 'accountName'
-   },
-   {
     title: '状态',
     align:"center",
     dataIndex: 'status',
@@ -101,36 +86,6 @@ export const formSchema: FormSchema[] = [
      },
   },
   {
-    label: '银行名称',
-    field: 'bankName',
-    component: 'Input',
-    dynamicRules: ({model,schema}) => {
-          return [
-                 { required: true, message: '请输入银行名称!'},
-          ];
-     },
-  },
-  {
-    label: '银行账号',
-    field: 'bankAccount',
-    component: 'Input',
-    dynamicRules: ({model,schema}) => {
-          return [
-                 { required: true, message: '请输入银行账号!'},
-          ];
-     },
-  },
-  {
-    label: '开户名',
-    field: 'accountName',
-    component: 'Input',
-    dynamicRules: ({model,schema}) => {
-          return [
-                 { required: true, message: '请输入开户名!'},
-          ];
-     },
-  },
-  {
     label: '状态',
     field: 'status',
     component: 'JDictSelectTag',
@@ -182,9 +137,6 @@ export const formSchema: FormSchema[] = [
 export const superQuerySchema = {
   driverId: {title: '司机ID',order: 0,view: 'text', type: 'string',},
   amount: {title: '提现金额',order: 1,view: 'number', type: 'number',},
-  bankName: {title: '银行名称',order: 2,view: 'text', type: 'string',},
-  bankAccount: {title: '银行账号',order: 3,view: 'text', type: 'string',},
-  accountName: {title: '开户名',order: 4,view: 'text', type: 'string',},
   status: {title: '状态(0待处理,1处理中,2已完成,3已拒绝)',order: 5,view: 'number', type: 'number',},
   auditTime: {title: '审核时间',order: 6,view: 'datetime', type: 'string',},
   auditBy: {title: '审核人',order: 7,view: 'text', type: 'string',},

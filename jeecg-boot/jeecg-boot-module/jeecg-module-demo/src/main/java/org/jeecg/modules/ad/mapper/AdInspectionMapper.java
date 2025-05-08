@@ -7,6 +7,7 @@ import org.jeecg.modules.ad.entity.AdInspection;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.jeecg.modules.ad.entity.Vo.AdInspectionVO;
+import org.jeecg.modules.ad.entity.Vo.DriverInspectionVO;
 
 /**
  * @Description: 广告年检表
@@ -21,7 +22,23 @@ public interface AdInspectionMapper extends BaseMapper<AdInspection> {
      *
      * @param page
      * @param adName
+     * @param vehicleType
+     * @param column
+     * @param order
      * @return
      */
-    IPage<AdInspectionVO> queryPageVxList(IPage<AdInspectionVO> page, @Param("adName") String adName);
+    IPage<AdInspectionVO> queryPageVxList(IPage<AdInspectionVO> page, @Param("adName") String adName, @Param("vehicleType") Integer vehicleType, @Param("column") String column, @Param("order") String order);
+    
+    /**
+     * 司机查询年检数据
+     * 
+     * @param driverId 司机ID
+     * @param type 年检类型
+     * @param status 年检状态
+     * @return 年检数据列表
+     */
+    List<DriverInspectionVO> queryDriverInspections(
+        @Param("driverId") String driverId, 
+        @Param("type") String type, 
+        @Param("status") Integer status,@Param("order") String order);
 }

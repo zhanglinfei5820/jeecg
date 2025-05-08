@@ -11,5 +11,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface IAdMerchantService extends IService<AdMerchant> {
     void AddMerchantAndUser(AdMerchant adMerchant);
-    void insertSysUser(String phone,String deptId,String orgCode);
+    /**
+     * 根据公司ID获取公司名称
+     * @param companyId 公司ID
+     * @return 公司名称
+     */
+    String getCompanyNameById(String companyId);
 }

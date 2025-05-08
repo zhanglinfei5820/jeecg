@@ -37,6 +37,14 @@ public interface CommonConstant {
     /**
      * 商户
      */
+    public static String MERCHANT_USER_ROLE = "1915769096705617922";
+    /**
+     * 公司
+     */
+    public static String COMPANY_USER_ROLE = "1915768900806455298";
+    /**
+     * 商户
+     */
     public static String MERCHANT_VALUE = "商户";
     /**
      * 司机
@@ -45,11 +53,19 @@ public interface CommonConstant {
     /**
      * 司机
      */
+    public static String DRIVER_USER_ROLE = "1915768961481256961";
+    /**
+     * 司机
+     */
     public static String DRIVER_VALUE = "司机";
+    /**
+     * 网约公司
+     */
+    public static String COMPANY_VALUE = "网约公司";
     /**
      * PASSWORD
      */
-    public static String PASSWORD = "71cfda26bd44637f";
+    public static String PASSWORD = "zy@123321";
     /**
      * SALT
      */
@@ -71,7 +87,11 @@ public interface CommonConstant {
      */
     public static String ROLE_CODE_ADDRIVE = "addrive";
     /**
-     * 广告公司
+     * 网约车公司
      */
     public static String ROLE_CODE_ADCOMPANY = "adcompany";
+    /**
+     * admin
+     */
+    public static String ADMIN = "admin";
 }

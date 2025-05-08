@@ -25,12 +25,22 @@
             <if test="adName != null and adName != ''">
                 AND ap.name LIKE CONCAT('%', #{adName}, '%')
             </if>
+            <if test="vehicleType != null">
+                AND av.vehicle_type = #{vehicleType}
+            </if>
         ORDER BY 
-            ai.create_time DESC
+            <choose>
+                <when test="column != null and column != '' and order != null and order != ''">
+                    ap.launch_end_time ${order}
+                </when>
+                <otherwise>
+                    ai.create_time DESC
+                </otherwise>
+            </choose>
     </select>
 
     <!-- 获取总记录数 -->
-    <select id="selectCount" resultType="java.lang.Long">
+    <select id="selectAdInspectionCount" resultType="java.lang.Long">
         SELECT 
             COUNT(1)
         FROM 
@@ -41,9 +51,51 @@
             ad_publish ap ON ai.ad_id = ap.id
         WHERE 
             1=1
-            <if test="adName != null and adName != ''">
+            <!--<if test="adName != null and adName != ''">
                 AND ap.name LIKE CONCAT('%', #{adName}, '%')
+            </if>-->
+    </select>
+    
+    <!-- 司机查询年检数据 -->
+    <select id="queryDriverInspections" resultType="org.jeecg.modules.ad.entity.Vo.DriverInspectionVO">
+        SELECT 
+            i.id,
+            i.create_time,
+            i.inspection_time,
+            i.inspector,
+            i.result,
+            i.damage_level,
+            i.damage_desc,
+            i.images,
+            i.remark,
+            i.type,
+            i.vehicle_id,
+            i.status,
+            v.vehicle_image,
+            v.plate_number,
+            p.name as ad_name
+        FROM 
+            ad_inspection i
+        LEFT JOIN 
+            ad_vehicle v ON i.vehicle_id = v.id
+        LEFT JOIN 
+            ad_publish p ON i.ad_id = p.id
+        WHERE 
+            i.drive_id = #{driverId}
+            <if test="type != null and type != ''">
+                AND i.type = #{type}
             </if>
+            <if test="status != null">
+                AND i.status = #{status}
+            </if>
+        <choose>
+            <when test="order == null or order == ''">
+                ORDER BY i.create_time DESC
+            </when>
+            <otherwise>
+                ORDER BY i.create_time ASC
+            </otherwise>
+        </choose>
     </select>
 
 </mapper>

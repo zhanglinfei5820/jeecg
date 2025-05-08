@@ -8,8 +8,11 @@ import java.util.stream.Collectors;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.common.system.query.QueryRuleEnum;
@@ -22,6 +25,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 
+import org.jeecg.modules.ad.service.ICommonLoginUserService;
+import org.jeecg.modules.ad.utils.CommonConstant;
+import org.jeecg.modules.system.entity.SysUser;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
 import org.jeecgframework.poi.excel.entity.ExportParams;
@@ -52,6 +58,9 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 public class AdMaterialController extends JeecgController<AdMaterial, IAdMaterialService> {
 	@Autowired
 	private IAdMaterialService adMaterialService;
+	@Resource
+	private ICommonLoginUserService commonLoginUserService;
+
 	
 	/**
 	 * 分页列表查询
@@ -69,7 +78,21 @@ public class AdMaterialController extends JeecgController<AdMaterial, IAdMateria
 								   @RequestParam(name="pageNo", defaultValue="1") Integer pageNo,
 								   @RequestParam(name="pageSize", defaultValue="10") Integer pageSize,
 								   HttpServletRequest req) {
-        QueryWrapper<AdMaterial> queryWrapper = QueryGenerator.initQueryWrapper(adMaterial, req.getParameterMap());
+		QueryWrapper<AdMaterial> queryWrapper = QueryGenerator.initQueryWrapper(adMaterial, req.getParameterMap());
+		SysUser loginUserInfo = commonLoginUserService.getLoginUserInfo(req);
+		if (loginUserInfo == null) {
+			return Result.error("用户未登录");
+		}
+		if (!CommonConstant.ADMIN.equals(loginUserInfo.getUsername())){
+			List<String> roleCodeList = commonLoginUserService.getRoleCode(loginUserInfo);
+			if (CollectionUtils.isEmpty(roleCodeList)){
+				return Result.error("用户未绑定角色");
+			}
+			if (roleCodeList.contains(CommonConstant.ROLE_CODE_ADVERTISERS)) {
+				// 广告方
+				queryWrapper.eq("merchant_id", loginUserInfo.getRelatedId());
+			}
+		}
 		Page<AdMaterial> page = new Page<AdMaterial>(pageNo, pageSize);
 		IPage<AdMaterial> pageList = adMaterialService.page(page, queryWrapper);
 		return Result.OK(pageList);
@@ -85,7 +108,12 @@ public class AdMaterialController extends JeecgController<AdMaterial, IAdMateria
 	@Operation(summary="广告物料表-添加")
 	@RequiresPermissions("ad:ad_material:add")
 	@PostMapping(value = "/add")
-	public Result<String> add(@RequestBody AdMaterial adMaterial) {
+	public Result<String> add(@RequestBody AdMaterial adMaterial,HttpServletRequest request) {
+		SysUser loginUserInfo = commonLoginUserService.getLoginUserInfo(request);
+		if (loginUserInfo == null) {
+			return Result.error("用户未登录");
+		}
+		adMaterial.setMerchantId(loginUserInfo.getRelatedId());
 		adMaterialService.save(adMaterial);
 		return Result.OK("添加成功！");
 	}

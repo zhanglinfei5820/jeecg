@@ -20,16 +20,16 @@ export const columns: BasicColumn[] = [
     align: "center",
     dataIndex: 'companyId'
   },
-  {
-    title: '公司名称',
-    align: "center",
-    dataIndex: 'companyName'
-  },
-  {
-    title: '广告名称',
-    align: "center",
-    dataIndex: 'adName'
-  },
+  // {
+  //   title: '公司名称',
+  //   align: "center",
+  //   dataIndex: 'companyName'
+  // },
+  // {
+  //   title: '广告名称',
+  //   align: "center",
+  //   dataIndex: 'adName'
+  // },
   {
     title: '广告id',
     align: "center",
@@ -43,7 +43,18 @@ export const columns: BasicColumn[] = [
   {
     title: '安装图片',
     align: "center",
-    dataIndex: 'installationImage'
+    dataIndex: 'installationImage',
+    customRender: ({ text }) => {
+      return render.renderImage({ text });
+    }
+  },
+  {
+    title: '车辆图片',
+    align: "center",
+    dataIndex: 'vehicleImage',
+    customRender: ({ text }) => {
+      return render.renderImage({ text });
+    }
   },
   {
     title: '车牌号码',

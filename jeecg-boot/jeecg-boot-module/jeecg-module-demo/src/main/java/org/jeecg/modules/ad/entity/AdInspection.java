@@ -96,13 +96,22 @@ public class AdInspection implements Serializable {
 	@Excel(name = "类型", width = 15)
     @Schema(description = "类型")
     @Dict(dicCode = "ad_inspection_type")
-    private java.lang.String type;
+    private java.lang.Integer type;
 	/**车辆id*/
 	@Excel(name = "车辆id", width = 15)
     @Schema(description = "车辆id")
     private java.lang.String vehicleId;
+	/**司机id*/
+	@Excel(name = "司机id", width = 15)
+    @Schema(description = "司机id")
+    private java.lang.String driveId;
 	/**广告id*/
 	@Excel(name = "广告id", width = 15)
     @Schema(description = "广告id")
     private java.lang.String adId;
+	/**状态*/
+	@Excel(name = "状态", width = 15)
+    @Schema(description = "状态-0待审核1已完成")
+    @Dict(dicCode = "ad_inspection_status")
+    private java.lang.Integer status;
 }

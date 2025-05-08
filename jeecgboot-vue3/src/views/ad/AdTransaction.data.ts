@@ -11,6 +11,11 @@ export const columns: BasicColumn[] = [
     dataIndex: 'driverId'
    },
    {
+    title: '抽成',
+    align:"center",
+    dataIndex: 'percentage'
+   },
+   {
     title: '金额',
     align:"center",
     dataIndex: 'amount'
@@ -98,9 +103,14 @@ export const formSchema: FormSchema[] = [
     label: '司机ID',
     field: 'driverId',
     component: 'Input',
+  },
+  {
+    label: '抽成',
+    field: 'percentage',
+    component: 'InputNumber',
     dynamicRules: ({model,schema}) => {
           return [
-                 { required: true, message: '请输入司机ID!'},
+                 { required: true, message: '请输入金额!'},
           ];
      },
   },

@@ -5,7 +5,11 @@ import cn.hutool.core.util.IdUtil;
 import org.jeecg.modules.ad.entity.AdMerchant;
 import org.jeecg.modules.ad.mapper.AdMerchantMapper;
 import org.jeecg.modules.ad.service.IAdMerchantService;
+import org.jeecg.modules.ad.service.ICommonLoginUserService;
 import org.jeecg.modules.ad.utils.CommonConstant;
+import org.jeecg.modules.ad.utils.EntityNameCache;
+import org.jeecg.modules.system.entity.SysUserRole;
+import org.jeecg.modules.system.mapper.SysUserRoleMapper;
 import org.springframework.stereotype.Service;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -32,36 +36,42 @@ public class AdMerchantServiceImpl extends ServiceImpl<AdMerchantMapper, AdMerch
     private SysUserMapper sysUserMapper;
 
     @Resource
-    private SysUserDepartMapper sysUserDepartMapper;
+    private SysUserRoleMapper sysUserRoleMapper;
+
+    @Resource
+    private EntityNameCache entityNameCache;
+
+    @Resource
+    private ICommonLoginUserService commonLoginUserService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void AddMerchantAndUser(AdMerchant adMerchant) {
-        // 1. Create sys_user
-        insertSysUser(adMerchant.getPhone(),CommonConstant.MERCHANT_USER_DEPT,CommonConstant.MERCHANT_VALUE);
         // 3. Save merchant
         this.save(adMerchant);
+        // 1. Create sys_user
+        commonLoginUserService.insertSysUser(adMerchant.getPhone(),adMerchant.getName(),adMerchant.getId(),CommonConstant.MERCHANT_USER_ROLE,CommonConstant.MERCHANT_VALUE);
     }
 
     @Override
-    public void insertSysUser(String phone,String deptId,String orgCode){
-        SysUser sysUser = new SysUser();
-        sysUser.setUsername(phone);
-        sysUser.setRealname(phone);
-        sysUser.setPassword(CommonConstant.PASSWORD);
-        sysUser.setSalt(CommonConstant.SALT);
-        sysUser.setEmail(phone + CommonConstant.EMAIL);
-        sysUser.setPhone(phone);
-        sysUser.setStatus(CommonConstant.INTEGER_VALUE_1);
-        sysUser.setDelFlag(CommonConstant.INTEGER_VALUE_0);
-        sysUser.setOrgCode(orgCode);
-        sysUser.setActivitiSync(CommonConstant.INTEGER_VALUE_1);
-        sysUser.setWorkNo(Long.toString(IdUtil.getSnowflakeNextId()));
-        sysUser.setUserIdentity(CommonConstant.INTEGER_VALUE_1);
-        // Save sys_user
-        sysUserMapper.insert(sysUser);
-        // 2. Create sys_user_depart relationship
-        SysUserDepart userDepart = new SysUserDepart(sysUser.getId(), deptId);
-        sysUserDepartMapper.insert(userDepart);
+    public String getCompanyNameById(String companyId) {
+        if (companyId == null || companyId.trim().isEmpty()) {
+            return "";
+        }
+        
+        // 优先从缓存中获取
+        String cachedName = entityNameCache.getCompanyName(companyId);
+        if (cachedName != null) {
+            return cachedName;
+        }
+        
+        // 缓存未命中，从数据库查询
+        AdMerchant merchant = this.getById(companyId);
+        String companyName = merchant != null ? merchant.getName() : "";
+        
+        // 存入缓存
+        entityNameCache.putCompanyName(companyId, companyName);
+        
+        return companyName;
     }
 }

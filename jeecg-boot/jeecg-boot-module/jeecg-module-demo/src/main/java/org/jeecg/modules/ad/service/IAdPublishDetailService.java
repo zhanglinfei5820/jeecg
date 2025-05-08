@@ -1,7 +1,14 @@
 package org.jeecg.modules.ad.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.jeecg.modules.ad.entity.AdPublishDetail;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.jeecg.modules.ad.entity.Vo.AdPublishDetailVO;
+import org.jeecg.modules.ad.entity.Vo.AdVehicleVO;
+
+import java.util.Map;
 
 /**
  * @Description: 广告发布明细表
@@ -16,4 +23,6 @@ public interface IAdPublishDetailService extends IService<AdPublishDetail> {
      * @return 分发结果信息
      */
     String distribute(AdPublishDetail adPublishDetail);
+
+    IPage<AdPublishDetailVO> queryPulishDetailPageList(Page<AdPublishDetailVO> page, Map<String, Object> queryParams);
 }

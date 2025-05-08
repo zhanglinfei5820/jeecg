@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 9000
   undertow:
     # max-http-post-size: 10MB # 平替 tomcat server.tomcat.max-swallow-siz， undertow该值默认为-1
     worker-threads: 16  # 4核CPU标准配置
@@ -149,9 +149,17 @@ spring:
           slow-sql-millis: 5000
       datasource:
         master:
+#          url: jdbc:mysql://127.0.0.1:3306/jeecg-boot?characterEncoding=UTF-8&useUnicode=true&useSSL=false&tinyInt1isBit=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+#          username: root
+#          password: root
+#          driver-class-name: com.mysql.cj.jdbc.Driver
+#          url: jdbc:mysql://127.0.0.1:3306/jeecg-boot?characterEncoding=UTF-8&useUnicode=true&useSSL=false&tinyInt1isBit=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+#          username: remote_user
+#          password: Zhanglinfei@123321
+#          driver-class-name: com.mysql.cj.jdbc.Driver
           url: jdbc:mysql://127.0.0.1:3306/jeecg-boot?characterEncoding=UTF-8&useUnicode=true&useSSL=false&tinyInt1isBit=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
           username: root
-          password: root
+          password: NingQi0506.@
           driver-class-name: com.mysql.cj.jdbc.Driver
           # 多数据源配置
           #multi-datasource1:
@@ -161,9 +169,12 @@ spring:
           #driver-class-name: com.mysql.cj.jdbc.Driver
   #redis 配置
   redis:
-    database: 0
+    database: 1
     host: 127.0.0.1
+#    host: 180.102.30.146
+#    host: 106.14.167.134
     port: 6379
+#    password: 123456
     password:
 #mybatis plus 设置
 mybatis-plus:
@@ -178,7 +189,7 @@ mybatis-plus:
       table-underline: true
   configuration:
     # 这个配置会将执行的sql打印出来，在开发或测试的时候可以用
-    #log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     # 返回类型为Map,显示null对应的字段
     call-setters-on-nulls: true
 #jeecg专用配置

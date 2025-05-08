@@ -3,6 +3,7 @@ import {FormSchema} from '/@/components/Table';
 import { rules} from '/@/utils/helper/validator';
 import { render } from '/@/utils/common/renderUtils';
 import { getWeekMonthQuarterYear } from '/@/utils';
+import { useUserStore } from '/@/store/modules/user';
 //列表数据
 export const columns: BasicColumn[] = [
   {
@@ -26,7 +27,7 @@ export const columns: BasicColumn[] = [
    {
     title: '广告标题',
     align:"center",
-    dataIndex: 'title'
+    dataIndex: 'name'
    },
    {
     title: '开始报名时间',
@@ -101,7 +102,7 @@ export const searchFormSchema: FormSchema[] = [
   },
   {
     label: '广告标题',
-    field: 'title',
+    field: 'name',
     component: 'Input',
     colProps: {span: 6},
   },
@@ -143,13 +144,21 @@ export const formSchema: FormSchema[] = [
     label: '商户ID',
     field: 'merchantId',
     component: 'JSearchSelect',
-    componentProps: {
-      dict: 'ad_merchant,name,id,status=1',
-      placeholder: '请选择商户',
-      stringToNumber: true,
-      api: '/ad/adMerchant/list',
-      labelKey: 'name',
-      valueKey: 'id'
+    componentProps: ({formModel}) => {
+      const userStore = useUserStore();
+      const userInfo = userStore.getUserInfo; 
+      const relatedId = userInfo.relatedId;
+      let dictCode = "ad_merchant,name,id,status=1";
+      if (relatedId) {
+        dictCode = `ad_merchant,name,id,status=1 and id=`+relatedId;
+      }
+      return {
+        dict: dictCode,
+        placeholder: '请选择商户',
+        labelKey: 'name',
+        valueKey: 'id',
+        stringToNumber: true
+      }
     },
     dynamicRules: ({model,schema}) => {
           return [
@@ -161,13 +170,23 @@ export const formSchema: FormSchema[] = [
     label: '物料ID',
     field: 'materialId',
     component: 'JSearchSelect',
-    componentProps: {
-      dict: 'ad_material,name,id,status=1',
-      placeholder: '请选择物料',
-      stringToNumber: true,
-      api: '/ad/adMaterial/list',
-      labelKey: 'name',
-      valueKey: 'id'
+    componentProps: ({formModel}) => {
+      const userStore = useUserStore();
+      const userInfo = userStore.getUserInfo; 
+      const relatedId = userInfo.relatedId;
+      let dictCode = "ad_material,name,id,status=1";
+      if (relatedId) {
+        dictCode = `ad_material,name,id,status=1 and merchant_id=`+relatedId;
+      }
+      return {
+        dict: dictCode,
+        placeholder: '请选择物料',
+        stringToNumber: true,
+        api: '/ad/adMaterial/list',
+        labelKey: 'name',
+        valueKey: 'id'
+      }
+      
     },
     dynamicRules: ({model,schema}) => {
           return [
@@ -177,7 +196,7 @@ export const formSchema: FormSchema[] = [
   },
   {
     label: '广告标题',
-    field: 'title',
+    field: 'name',
     component: 'Input',
     dynamicRules: ({model,schema}) => {
           return [
@@ -219,6 +238,46 @@ export const formSchema: FormSchema[] = [
                  { validator: (_, value) => {
                     if (value && model.startTime && value <= model.startTime) {
                       return Promise.reject('报名结束时间必须在开始报名时间之后!');
+                    }
+                    return Promise.resolve();
+                 }}
+          ];
+     },
+  },
+  {
+    label: '投放开始时间',
+    field: 'launchStartTime',
+    component: 'DatePicker',
+    componentProps: {
+       showTime: true,
+       valueFormat: 'YYYY-MM-DD HH:mm:ss'
+     },
+    dynamicRules: ({model,schema}) => {
+          return [
+                 { required: true, message: '请输入开始报名时间!'},
+                 { validator: (_, value) => {
+                    if (value && model.launchEndTime && value >= model.launchEndTime) {
+                      return Promise.reject('投放开始时间必须在投放结束时间之前!');
+                    }
+                    return Promise.resolve();
+                 }}
+          ];
+     },
+  },
+  {
+    label: '投放结束时间',
+    field: 'launchEndTime',
+    component: 'DatePicker',
+    componentProps: {
+       showTime: true,
+       valueFormat: 'YYYY-MM-DD HH:mm:ss'
+     },
+    dynamicRules: ({model,schema}) => {
+          return [
+                 { required: true, message: '请输入报名结束时间!'},
+                 { validator: (_, value) => {
+                    if (value && model.launchStartTime && value <= model.launchStartTime) {
+                      return Promise.reject('投放结束时间必须在投放开始时间之后!');
                     }
                     return Promise.resolve();
                  }}

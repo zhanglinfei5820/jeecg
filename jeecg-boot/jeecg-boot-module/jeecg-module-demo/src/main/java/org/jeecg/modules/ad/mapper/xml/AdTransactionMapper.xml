@@ -2,4 +2,44 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.jeecg.modules.ad.mapper.AdTransactionMapper">
 
+    <!-- 查询司机交易记录带广告名称的结果映射 -->
+    <resultMap id="TransactionWithAdNameMap" type="org.jeecg.modules.ad.entity.Vo.AdTransactionVO">
+        <id column="id" property="id"/>
+        <result column="create_time" property="createTime"/>
+        <result column="amount" property="amount"/>
+        <result column="type" property="type"/>
+        <result column="transaction_type" property="transactionType"/>
+        <result column="related_id" property="relatedId"/>
+        <result column="balance" property="balance"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="ad_name" property="adName"/>
+        <result column="report_time" property="reportTime"/>
+    </resultMap>
+
+    <!-- 获取司机交易记录，包括广告名称，带交易类型和日期条件 -->
+    <select id="getDriverTransactions" resultMap="TransactionWithAdNameMap">
+        SELECT
+            t.*,
+            p.name as ad_name,
+            r.report_time
+        FROM
+            ad_transaction t
+        LEFT JOIN
+            ad_publish_detail pd ON t.related_id = pd.id
+        LEFT JOIN
+            ad_report r ON t.report_id = r.id
+        LEFT JOIN
+            ad_publish p ON pd.publish_id = p.id
+        WHERE
+            t.driver_id = #{driverId}
+            <if test="transactionType != null">
+                AND t.transaction_type = #{transactionType}
+            </if>
+            <if test="yearMonth != null and yearMonth != ''">
+                AND DATE_FORMAT(t.create_time, '%Y-%m') = #{yearMonth}
+            </if>
+        ORDER BY
+            t.create_time DESC
+    </select>
 </mapper>

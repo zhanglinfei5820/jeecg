@@ -1,11 +1,15 @@
 package org.jeecg.modules.ad.service.impl;
 
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.jeecg.modules.ad.entity.AdCompany;
 import org.jeecg.modules.ad.mapper.AdCompanyMapper;
 import org.jeecg.modules.ad.service.IAdCompanyService;
+import org.jeecg.modules.ad.service.ICommonLoginUserService;
+import org.jeecg.modules.ad.utils.CommonConstant;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import javax.annotation.Resource;
 
 /**
  * @Description: 广告公司
@@ -16,4 +20,14 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 @Service
 public class AdCompanyServiceImpl extends ServiceImpl<AdCompanyMapper, AdCompany> implements IAdCompanyService {
 
+    @Resource
+    private ICommonLoginUserService commonLoginUserService;
+
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void addCompanyAndUser(AdCompany adCompany) {
+        this.saveOrUpdate(adCompany);
+        commonLoginUserService.insertSysUser(adCompany.getPhone(),adCompany.getName(),adCompany.getId(), CommonConstant.COMPANY_USER_ROLE, CommonConstant.COMPANY_VALUE);
+    }
 }

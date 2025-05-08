@@ -627,8 +627,16 @@ public class LoginController {
 			return loginTenantError;
 		}
 
+		//添加roleCode到返回信息中
+		List<String> roles = sysUserService.getRole(username);
+		if(roles != null && !roles.isEmpty()) {
+			String roleCode = String.join(",", roles);
+			obj.put("roleCode", roleCode);
+		}
+
 		//5. 设置登录用户信息
 		obj.put("userInfo", sysUser);
+		
 		
 		//6. 生成token
 		String token = JwtUtil.sign(username, syspassword);

@@ -1,5 +1,8 @@
 package org.jeecg.modules.ad.service;
 
+import org.jeecg.modules.system.entity.SysUser;
+
+import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 public interface IWxLoginService {
@@ -9,4 +12,4 @@ public interface IWxLoginService {
      * @return 包含token和用户信息的Map
      */
     Map<String, Object> getPhoneNumber(String code);
-} 
+}

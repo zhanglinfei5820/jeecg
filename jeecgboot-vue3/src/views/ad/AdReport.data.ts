@@ -46,9 +46,17 @@ export const columns: BasicColumn[] = [
     dataIndex: 'content'
    },
    {
+    title: '维修金次数',
+    align:"center",
+    dataIndex: 'maintenanceCount'
+   },
+   {
     title: '上报图片(多张)',
     align:"center",
-    dataIndex: 'images'
+    dataIndex: 'images',
+    customRender: ({ text }) => {
+      return render.renderImage({ text });
+    }
    },
    {
     title: '处理结果',
@@ -115,11 +123,11 @@ export const formSchema: FormSchema[] = [
     field: 'publishDetailId',
     component: 'JSearchSelect',
     componentProps: {
-      dict: 'ad_publish_detail,title,id,status=1',
+      dict: 'ad_publish_detail,name,id,status=1',
       placeholder: '请选择发布明细',
       stringToNumber: true,
       api: '/ad/adPublishDetail/list',
-      labelKey: 'title',
+      labelKey: 'name',
       valueKey: 'id'
     },
     dynamicRules: ({model,schema}) => {
@@ -193,6 +201,11 @@ export const formSchema: FormSchema[] = [
   {
     label: '上报内容',
     field: 'content',
+    component: 'Input',
+  },
+  {
+    label: '维修金次数',
+    field: 'maintenanceCount',
     component: 'Input',
   },
   {

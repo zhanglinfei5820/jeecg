@@ -14,21 +14,6 @@ export const columns: BasicColumn[] = [
     align:"center",
     dataIndex: 'publishId'
    },
-   {
-    title: '车辆ID',
-    align:"center",
-    dataIndex: 'vehicleId'
-   },
-   {
-    title: '司机ID',
-    align:"center",
-    dataIndex: 'driverId'
-   },
-   {
-    title: '司机名称',
-    align:"center",
-    dataIndex: 'driverName'
-    },
     {
       title: '公司ID',
       align:"center",
@@ -80,7 +65,7 @@ export const columns: BasicColumn[] = [
     align:"center",
     dataIndex: 'status',
     customRender: ({ text }) => { 
-      return render.renderDict(text, 'ad_publish_status');
+      return render.renderDict(text, 'ad_publish_detail_status');
     }
    },
 ];
@@ -93,29 +78,11 @@ export const searchFormSchema: FormSchema[] = [
     colProps: {span: 6},
   },
   {
-    label: '车辆ID',
-    field: 'vehicleId',
-    component: 'Input',
-    colProps: {span: 6},
-  },
-  {
-    label: '司机名称',
-    field: 'driverName',
-    component: 'Input',
-    colProps: {span: 6},
-  },
-  {
-    label: '公司名称',
-    field: 'companyName',
-    component: 'Input',
-    colProps: {span: 6},
-  },
-  {
     label: '状态',
     field: 'status',
     component: 'JDictSelectTag',
     componentProps: {
-      dictCode: "ad_publish_status",
+      dictCode: "ad_publish_detail_status",
       placeholder: '请选择状态',
       stringToNumber: true
     },
@@ -145,36 +112,6 @@ export const formSchema: FormSchema[] = [
      },
   },
   {
-    label: '广告标题',
-    field: 'title',
-    component: 'Input',
-  },
-  {
-    label: '车辆ID',
-    field: 'vehicleId',
-    component: 'Input',
-    dynamicRules: ({model,schema}) => {
-          return [
-                 { required: true, message: '请输入车辆ID!'},
-          ];
-     },
-  },
-  {
-    label: '司机ID',
-    field: 'driverId',
-    component: 'Input',
-    dynamicRules: ({model,schema}) => {
-          return [
-                 { required: true, message: '请输入司机ID!'},
-          ];
-     },
-  },
-  {
-    label: '司机名称',
-    field: 'driverName',
-    component: 'Input',
-  },
-  {
     label: '司机数',
     field: 'drivers',
     component: 'InputNumber',
@@ -187,11 +124,6 @@ export const formSchema: FormSchema[] = [
   {
     label: '公司ID',
     field: 'companyId',
-    component: 'Input',
-  },
-  {
-    label: '公司名称',
-    field: 'companyName',
     component: 'Input',
   },
   {
@@ -262,7 +194,7 @@ export const formSchema: FormSchema[] = [
     field: 'status',
     component: 'JDictSelectTag',
     componentProps: {
-      dictCode: "ad_publish_status",
+      dictCode: "ad_publish_detail_status",
       placeholder: '请选择状态',
       stringToNumber: true
     },

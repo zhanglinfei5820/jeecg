@@ -65,26 +65,14 @@ public class AdVehicle implements Serializable {
 	@Excel(name = "广告ID", width = 60)
     @Schema(description = "广告ID")
     private java.lang.String adId;
-	/**广告名称*/
-	@Excel(name = "广告名称", width = 60)
-    @Schema(description = "广告名称")
-    private java.lang.String adName;
 	/**所属公司ID*/
 	@Excel(name = "所属公司ID", width = 60)
     @Schema(description = "所属公司ID")
     private java.lang.String companyId;
-	/**所属公司名称*/
-	@Excel(name = "所属公司名称", width = 60)
-    @Schema(description = "所属公司名称")
-    private java.lang.String companyName;
 	/**所属司机ID*/
 	@Excel(name = "所属司机ID", width = 60)
     @Schema(description = "所属司机ID")
     private java.lang.String driverId;
-	/**所属司机名称*/
-	@Excel(name = "所属司机名称", width = 60)
-    @Schema(description = "所属司机名称")
-    private java.lang.String driverName;
 	/**车牌号码*/
 	@Excel(name = "车牌号码", width = 15)
     @Schema(description = "车牌号码")
@@ -116,7 +104,7 @@ public class AdVehicle implements Serializable {
     private java.lang.String licenseImage;
 	/**状态(0禁用,1启用)*/
 	@Excel(name = "状态", width = 15)
-    @Schema(description = "状态")
+    @Schema(description = "状态-0启用,1已安装2禁止3已分配4待安装")
     @Dict(dicCode = "ad_vehicle_status")
     private java.lang.Integer status;
 	/**车窗可用面积(m²)*/
@@ -140,4 +128,8 @@ public class AdVehicle implements Serializable {
     @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
     @Schema(description = "到期日期")
     private java.util.Date expireTime;
+	/**车辆图片*/
+	@Excel(name = "车辆图片", width = 15)
+    @Schema(description = "车辆图片")
+    private java.lang.String vehicleImage;
 }

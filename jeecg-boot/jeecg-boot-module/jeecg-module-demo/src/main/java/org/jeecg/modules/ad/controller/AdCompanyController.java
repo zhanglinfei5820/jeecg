@@ -68,7 +68,7 @@ public class AdCompanyController extends JeecgController<AdCompany, IAdCompanySe
 	@RequiresPermissions("ad:ad_company:add")
 	@PostMapping(value = "/add")
 	public Result<String> add(@RequestBody AdCompany adCompany) {
-		adCompanyService.save(adCompany);
+		adCompanyService.addCompanyAndUser(adCompany);
 		return Result.OK("添加成功！");
 	}
 	

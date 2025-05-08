@@ -106,4 +106,8 @@ public class AdReport implements Serializable {
 	@Excel(name = "备注", width = 15)
     @Schema(description = "备注")
     private java.lang.String remark;
+	/**维护金次数*/
+	@Excel(name = "维护金次数", width = 15)
+    @Schema(description = "维护金次数")
+    private java.lang.Integer maintenanceCount;
 }

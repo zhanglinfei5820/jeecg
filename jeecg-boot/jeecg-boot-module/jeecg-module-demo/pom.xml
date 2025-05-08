@@ -29,6 +29,11 @@
             <artifactId>jeecg-system-biz</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.example</groupId>
+            <artifactId>oos-java-sdk</artifactId>
+            <version>6.5.3</version>
+        </dependency>
     </dependencies>
 
 </project>

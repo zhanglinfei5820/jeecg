@@ -10,11 +10,6 @@ const uploadUrl = `${apiUrl}/sys/common/upload`;
 //列表数据
 export const columns: BasicColumn[] = [
    {
-    title: '发布明细ID',
-    align:"center",
-    dataIndex: 'publishDetailId'
-   },
-   {
     title: '年检时间',
     align:"center",
     dataIndex: 'inspectionTime'
@@ -23,6 +18,11 @@ export const columns: BasicColumn[] = [
     title: '检查人',
     align:"center",
     dataIndex: 'inspector'
+   },
+   {
+    title: '车辆id',
+    align:"center",
+    dataIndex: 'vehicleId'
    },
    {
     title: '类型',
@@ -56,12 +56,23 @@ export const columns: BasicColumn[] = [
    {
     title: '检查图片(多张)',
     align:"center",
-    dataIndex: 'images'
+    dataIndex: 'images',
+    customRender: ({ text }) => {
+      return render.renderImage({ text });
+    }
    },
    {
     title: '备注',
     align:"center",
     dataIndex: 'remark'
+   },
+   {
+    title: '状态',
+    align:"center",
+    dataIndex: 'status',
+    customRender: ({ text }) => { 
+      return render.renderDict(text, 'ad_inspection_status');
+    }
    },
 ];
 //查询数据
@@ -99,21 +110,16 @@ export const searchFormSchema: FormSchema[] = [
 export const formSchema: FormSchema[] = [
   {
     label: '发布广告',
-    field: 'publishDetailId',
+    field: 'adId',
     component: 'JSearchSelect',
     componentProps: {
-      dict: 'ad_publish,title,id,status=1 or status=4',
+      dict: 'ad_publish,name,id,status=1 or status=4',
       placeholder: '请选择发布广告',
       stringToNumber: true,
       api: '/ad/adPublish/list',
-      labelKey: 'title',
+      labelKey: 'name',
       valueKey: 'id'
     },
-    dynamicRules: ({model,schema}) => {
-          return [
-                 { required: true, message: '请选择发布广告广告!'},
-          ];
-     },
   },
   {
     label: '年检时间',
@@ -123,19 +129,19 @@ export const formSchema: FormSchema[] = [
        showTime: true,
        valueFormat: 'YYYY-MM-DD HH:mm:ss'
      },
-    dynamicRules: ({model,schema}) => {
-          return [
-                 { required: true, message: '请输入年检时间!'},
-          ];
-     },
   },
   {
     label: '检查人',
     field: 'inspector',
     component: 'Input',
-    dynamicRules: ({model,schema}) => {
+  },
+  {
+    label: '车辆id',
+    field: 'vehicleId',
+    component: 'Input',
+    dynamicRules: () => {
           return [
-                 { required: true, message: '请输入检查人!'},
+                 { required: true, message: '请输入车辆id!'},
           ];
      },
   },
@@ -146,13 +152,10 @@ export const formSchema: FormSchema[] = [
     componentProps: {
       dictCode: "ad_inspection_type",
       placeholder: '请选择类型',
-      stringToNumber: true
+      stringToNumber: true,
+      valueField: 'value',
+      labelField: 'text',
     },
-    dynamicRules: ({model,schema}) => {
-          return [
-                 { required: true, message: '请选择类型!'},
-          ];
-     },
   },
   {
     label: '检查结果',
@@ -163,11 +166,6 @@ export const formSchema: FormSchema[] = [
       placeholder: '请选择检查结果',
       stringToNumber: true
     },
-    dynamicRules: ({model,schema}) => {
-          return [
-                 { required: true, message: '请选择检查结果!'},
-          ];
-     },
   },
   {
     label: '破损程度',
@@ -178,11 +176,6 @@ export const formSchema: FormSchema[] = [
       placeholder: '请选择破损程度',
       stringToNumber: true
     },
-    dynamicRules: ({model,schema}) => {
-          return [
-                 { required: true, message: '请输入破损程度!'},
-          ];
-     },
   },
   {
     label: '破损描述',
@@ -206,6 +199,16 @@ export const formSchema: FormSchema[] = [
     colProps: { span: 24 }
   },
   {
+    label: '状态',
+    field: 'status',
+    component: 'JDictSelectTag',
+    componentProps: {
+      dictCode: 'ad_inspection_status',
+      placeholder: '请选择状态',
+      stringToNumber: true
+    },
+  },
+  {
     label: '备注',
     field: 'remark',
     component: 'Input',
@@ -221,7 +224,6 @@ export const formSchema: FormSchema[] = [
 
 // 高级查询数据
 export const superQuerySchema = {
-  publishDetailId: {title: '发布明细ID',order: 0,view: 'text', type: 'string',},
   inspectionTime: {title: '年检时间',order: 1,view: 'datetime', type: 'string',},
   inspector: {title: '检查人',order: 2,view: 'text', type: 'string',},
   result: {title: '检查结果(0不合格,1合格)',order: 3,view: 'number', type: 'number',},

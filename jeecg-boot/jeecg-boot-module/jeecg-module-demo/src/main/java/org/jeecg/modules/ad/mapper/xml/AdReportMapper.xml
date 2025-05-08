@@ -2,4 +2,136 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.jeecg.modules.ad.mapper.AdReportMapper">
 
+    <!-- 根据状态查询上报任务列表（小程序接口） -->
+    <select id="queryReportTasksByStatus" resultType="org.jeecg.modules.ad.entity.Vo.AdReportTaskVO">
+        SELECT 
+            r.*,
+            m.name AS merchantName,
+            p.launch_start_time AS launchStartTime,
+            p.launch_end_time AS launchEndTime,
+            DATE_FORMAT(DATE_SUB(r.report_time, INTERVAL 1 MONTH), '%Y-%m-%d') AS lastReportTime,
+            v.maintenance_count AS maintenanceCount,
+            r.report_time AS reportTime,
+            r.status,
+            pd.price
+        FROM 
+            ad_report r
+        LEFT JOIN 
+            ad_publish_detail pd ON r.publish_detail_id = pd.id
+        LEFT JOIN 
+            ad_publish p ON pd.publish_id = p.id
+        LEFT JOIN 
+            ad_merchant m ON p.merchant_id = m.id
+        LEFT JOIN 
+            ad_vehicle v ON pd.vehicle_id = v.id
+        WHERE
+            1=1
+            <if test="status != null">
+                and r.status = #{status}
+            </if>
+            <if test="driverId != null">
+                and r.driver_id = #{driverId}
+            </if>
+        ORDER BY 
+            r.report_time DESC
+    </select>
+
+    <!-- 根据状态和是否到期查询车辆信息（小程序接口） -->
+    <select id="queryVehiclesByStatusAndDue" resultType="org.jeecg.modules.ad.entity.Vo.AdReportTaskVO">
+        SELECT
+        v.id,
+        v.plate_number as plateNumber,
+        v.vehicle_type as vehicleType,
+        v.status as vehicleStatus,
+        v.expire_time as expireTime,
+        v.brand,
+        v.installation_time as installationTime,
+        v.vehicle_image as vehicleImage,
+        p.installation_address as installationAddress,
+        p.name as adName,
+        m.name as merchantName,
+        p.launch_start_time as launchStartTime,
+        p.launch_end_time as launchEndTime,
+        v.maintenance_count AS maintenanceCount,
+        pd.price
+        FROM
+        ad_vehicle v
+        LEFT JOIN
+        ad_publish_detail pd ON v.id = pd.vehicle_id
+        LEFT JOIN
+        ad_publish p ON pd.publish_id = p.id
+        LEFT JOIN
+        ad_merchant m ON p.merchant_id = m.id
+        WHERE
+        1=1
+        <if test="status != null">
+            AND v.status = #{status}
+        </if>
+        <if test="maintenanceStatus != null">
+            AND v.status = #{maintenanceStatus}
+        </if>
+        <if test="due != null">
+            AND v.expire_time &lt; NOW()
+        </if>
+        <if test="driverId != null">
+            AND v.driver_id = #{driverId}
+        </if>
+        ORDER BY
+        v.create_time DESC
+    </select>
+
+    <select id="queryVehiclesByStatusAndDue2" resultType="org.jeecg.modules.ad.entity.Vo.AdReportTaskVO">
+        SELECT
+        r.report_time,
+        r.report_type,
+        r.status,
+        r.content,
+        r.images,
+        r.process_result,
+        r.process_time,
+        r.process_by,
+        r.remark,
+        r.maintenance_count as rmaintenanceCount,
+        r.id,
+        v.plate_number as plateNumber,
+        v.vehicle_type as vehicleType,
+        r.status as vehicleStatus,
+        v.expire_time as expireTime,
+        v.brand,
+        v.installation_time as installationTime,
+        v.vehicle_image as vehicleImage,
+        p.installation_address as installationAddress,
+        p.name as adName,
+        m.name as merchantName,
+        p.launch_start_time as launchStartTime,
+        p.launch_end_time as launchEndTime,
+        v.maintenance_count AS maintenanceCount,
+        pd.price
+        FROM
+        ad_report r
+        LEFT JOIN
+        ad_publish_detail pd ON r.publish_detail_id = pd.id
+        LEFT JOIN
+        ad_publish p ON pd.publish_id = p.id
+        LEFT JOIN
+        ad_merchant m ON p.merchant_id = m.id
+        LEFT JOIN
+        ad_vehicle v ON pd.vehicle_id = v.id
+        WHERE
+        1=1
+        <if test="status != null">
+            AND v.status = #{status}
+        </if>
+        <if test="maintenanceStatus != null">
+            AND r.status = #{maintenanceStatus}
+        </if>
+        <if test="due != null">
+            AND v.expire_time &lt; NOW()
+        </if>
+        <if test="driverId != null">
+            AND r.driver_id = #{driverId}
+        </if>
+        ORDER BY
+        v.create_time DESC
+    </select>
 </mapper>

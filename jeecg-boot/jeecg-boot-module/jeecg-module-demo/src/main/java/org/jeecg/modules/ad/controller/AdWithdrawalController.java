@@ -8,13 +8,18 @@ import java.util.stream.Collectors;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.system.query.QueryGenerator;
 import org.jeecg.common.system.query.QueryRuleEnum;
 import org.jeecg.common.util.oConvertUtils;
+import org.jeecg.modules.ad.entity.AdDriver;
+import org.jeecg.modules.ad.entity.AdPublishDetail;
+import org.jeecg.modules.ad.entity.AdTransaction;
 import org.jeecg.modules.ad.entity.AdWithdrawal;
+import org.jeecg.modules.ad.service.IAdDriverService;
 import org.jeecg.modules.ad.service.IAdWithdrawalService;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -39,6 +44,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import org.jeecg.common.aspect.annotation.AutoLog;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
+import java.math.BigDecimal;
+
  /**
  * @Description: 提现申请表
  * @Author: jeecg-boot
@@ -52,6 +59,8 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 public class AdWithdrawalController extends JeecgController<AdWithdrawal, IAdWithdrawalService> {
 	@Autowired
 	private IAdWithdrawalService adWithdrawalService;
+	@Resource
+	private IAdDriverService iAdDriverService;
 	
 	/**
 	 * 分页列表查询
@@ -101,6 +110,24 @@ public class AdWithdrawalController extends JeecgController<AdWithdrawal, IAdWit
 	@RequiresPermissions("ad:ad_withdrawal:edit")
 	@RequestMapping(value = "/edit", method = {RequestMethod.PUT,RequestMethod.POST})
 	public Result<String> edit(@RequestBody AdWithdrawal adWithdrawal) {
+		if (adWithdrawal.getStatus()==2){
+			//增加一条流水记录
+			AdDriver driver = iAdDriverService.getById(adWithdrawal.getDriverId());
+			if (driver==null){
+				return Result.error("没有找到司机信息!");
+			}
+//			BigDecimal amount = adWithdrawal.getAmount();
+//			BigDecimal balance = driver.getBalance();
+//			if (amount.compareTo(balance) > 0){
+//				return Result.error("提现金额不能大于余额!");
+//			}
+//			BigDecimal subtract = balance.subtract(amount);
+			AdTransaction adTransaction = new AdTransaction();
+			adTransaction.setTransactionType(1);
+			adTransaction.setDriverId(adWithdrawal.getDriverId());
+			adTransaction.setAmount(adWithdrawal.getAmount());
+			adTransaction.setBalance(driver.getBalance());
+		}
 		adWithdrawalService.updateById(adWithdrawal);
 		return Result.OK("编辑成功!");
 	}
@@ -177,4 +204,22 @@ public class AdWithdrawalController extends JeecgController<AdWithdrawal, IAdWit
         return super.importExcel(request, response, AdWithdrawal.class);
     }
 
+    /**
+     * 小程序司机提现申请
+     *
+     * @param amount 提现金额
+     * @return 处理结果
+     */
+    @Operation(summary="小程序-司机提现申请")
+    @PostMapping(value = "/driverWithdraw")
+    public Result<?> driverWithdraw(@RequestParam(name="amount", required=true) BigDecimal amount) {
+        log.info("司机申请提现金额: {}", amount);
+        try {
+//			return Result.OK("提现申请提交成功，请等待审核");
+            return adWithdrawalService.driverWithdraw(amount);
+        } catch (Exception e) {
+            log.error("司机提现申请处理失败", e);
+            return Result.error("提现申请处理失败: " + e.getMessage());
+        }
+    }
 }
