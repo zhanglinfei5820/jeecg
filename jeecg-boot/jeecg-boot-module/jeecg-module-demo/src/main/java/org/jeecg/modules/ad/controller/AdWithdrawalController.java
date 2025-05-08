@@ -20,6 +20,7 @@ import org.jeecg.modules.ad.entity.AdPublishDetail;
 import org.jeecg.modules.ad.entity.AdTransaction;
 import org.jeecg.modules.ad.entity.AdWithdrawal;
 import org.jeecg.modules.ad.service.IAdDriverService;
+import org.jeecg.modules.ad.service.IAdTransactionService;
 import org.jeecg.modules.ad.service.IAdWithdrawalService;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -27,6 +28,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 
+import org.jeecg.modules.ad.utils.CommonConstant;
 import org.jeecgframework.poi.excel.ExcelImportUtil;
 import org.jeecgframework.poi.excel.def.NormalExcelConstants;
 import org.jeecgframework.poi.excel.entity.ExportParams;
@@ -61,7 +63,9 @@ public class AdWithdrawalController extends JeecgController<AdWithdrawal, IAdWit
 	private IAdWithdrawalService adWithdrawalService;
 	@Resource
 	private IAdDriverService iAdDriverService;
-	
+	@Resource
+	private IAdTransactionService iAdTransactionService;
+
 	/**
 	 * 分页列表查询
 	 *
@@ -81,6 +85,36 @@ public class AdWithdrawalController extends JeecgController<AdWithdrawal, IAdWit
         QueryWrapper<AdWithdrawal> queryWrapper = QueryGenerator.initQueryWrapper(adWithdrawal, req.getParameterMap());
 		Page<AdWithdrawal> page = new Page<AdWithdrawal>(pageNo, pageSize);
 		IPage<AdWithdrawal> pageList = adWithdrawalService.page(page, queryWrapper);
+		
+		// 增加司机名称
+		List<AdWithdrawal> records = pageList.getRecords();
+		if(records != null && !records.isEmpty()) {
+			// 收集所有司机ID
+			List<String> driverIds = records.stream()
+				.map(AdWithdrawal::getDriverId)
+				.distinct()
+				.filter(id -> id != null && !id.isEmpty())
+				.collect(Collectors.toList());
+				
+			if(!driverIds.isEmpty()) {
+				// 批量查询司机信息
+				Map<String, AdDriver> driverMap = new HashMap<>();
+				List<AdDriver> driverList = iAdDriverService.listByIds(driverIds);
+				driverMap = driverList.stream()
+					.collect(Collectors.toMap(AdDriver::getId, driver -> driver, (k1, k2) -> k1));
+					
+				// 设置司机名称
+				for(AdWithdrawal withdrawal : records) {
+					if(withdrawal.getDriverId() != null && driverMap.containsKey(withdrawal.getDriverId())) {
+						// 这里假设AdWithdrawal类中新增了一个用于携带司机名称的字段
+						// 可以通过反射设置，或如果有相应的setter方法则直接调用
+						// 为简化处理，这里通过Map形式添加额外属性，且添加driverName属性
+						withdrawal.setDriverName(driverMap.get(withdrawal.getDriverId()).getName());
+					}
+				}
+			}
+		}
+		
 		return Result.OK(pageList);
 	}
 	
@@ -123,10 +157,11 @@ public class AdWithdrawalController extends JeecgController<AdWithdrawal, IAdWit
 //			}
 //			BigDecimal subtract = balance.subtract(amount);
 			AdTransaction adTransaction = new AdTransaction();
-			adTransaction.setTransactionType(1);
+			adTransaction.setTransactionType(CommonConstant.TRANSACTION_TYPE_1);
 			adTransaction.setDriverId(adWithdrawal.getDriverId());
 			adTransaction.setAmount(adWithdrawal.getAmount());
 			adTransaction.setBalance(driver.getBalance());
+			iAdTransactionService.save(adTransaction);
 		}
 		adWithdrawalService.updateById(adWithdrawal);
 		return Result.OK("编辑成功!");

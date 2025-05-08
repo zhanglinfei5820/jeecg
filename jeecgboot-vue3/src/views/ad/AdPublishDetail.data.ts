@@ -12,12 +12,24 @@ export const columns: BasicColumn[] = [
    {
     title: '发布ID',
     align:"center",
-    dataIndex: 'publishId'
+    dataIndex: 'publishId',
+    ifShow: false
+   },
+   {
+    title: '发布广告',
+    align:"center",
+    dataIndex: 'name'
    },
     {
       title: '公司ID',
       align:"center",
-      dataIndex: 'companyId'
+      dataIndex: 'companyId',
+      ifShow: false
+    },
+    {
+      title: '公司名称',
+      align:"center",
+      dataIndex: 'companyName'
     },
     {
       title: '司机数',
@@ -28,11 +40,6 @@ export const columns: BasicColumn[] = [
       title: '实际司机数',
       align:"center",
       dataIndex: 'actualDrivers'
-    },
-    {
-      title: '公司名称',
-      align:"center",
-      dataIndex: 'companyName'
     },
    {
     title: '广告位置',
@@ -102,12 +109,19 @@ export const searchFormSchema: FormSchema[] = [
 //表单数据
 export const formSchema: FormSchema[] = [
   {
-    label: '发布ID',
+    label: '发布广告',
     field: 'publishId',
-    component: 'Input',
+    component: 'JSearchSelect',
+    componentProps: {
+      dict: 'ad_publish,name,id,status=1',
+      placeholder: '请选择发布',
+      stringToNumber: true,
+      labelKey: 'name',
+      valueKey: 'id'
+    },
     dynamicRules: ({model,schema}) => {
           return [
-                 { required: true, message: '请输入发布ID!'},
+                 { required: true, message: '请选择发布广告!'},
           ];
      },
   },
@@ -122,9 +136,21 @@ export const formSchema: FormSchema[] = [
     component: 'InputNumber',
   },
   {
-    label: '公司ID',
+    label: '公司',
     field: 'companyId',
-    component: 'Input',
+    component: 'JSearchSelect',
+    componentProps: {
+      dict: 'ad_company,name,id,status=1',
+      placeholder: '请选择公司',
+      stringToNumber: true,
+      labelKey: 'name',
+      valueKey: 'id'
+    },
+    dynamicRules: ({model,schema}) => {
+          return [
+                 { required: true, message: '请选择公司!'},
+          ];
+     },
   },
   {
     label: '广告位置',
@@ -188,6 +214,11 @@ export const formSchema: FormSchema[] = [
       dictCode: "ad_publish_detail_type",
       placeholder: '请选择类型',
     },
+    dynamicRules: ({model,schema}) => {
+          return [
+                 { required: true, message: '请选择类型!'},
+          ];
+     },
   },
   {
     label: '状态',
@@ -200,7 +231,7 @@ export const formSchema: FormSchema[] = [
     },
     dynamicRules: ({model,schema}) => {
           return [
-                 { required: true, message: '请输入状态!'},
+                 { required: true, message: '请选择状态!'},
           ];
      },
   },

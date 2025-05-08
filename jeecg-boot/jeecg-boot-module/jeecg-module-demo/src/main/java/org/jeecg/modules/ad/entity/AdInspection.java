@@ -4,10 +4,8 @@ import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.math.BigDecimal;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.annotation.TableLogic;
+
+import com.baomidou.mybatisplus.annotation.*;
 import org.jeecg.common.constant.ProvinceCityArea;
 import org.jeecg.common.util.SpringContextUtils;
 import lombok.Data;
@@ -101,10 +99,20 @@ public class AdInspection implements Serializable {
 	@Excel(name = "车辆id", width = 15)
     @Schema(description = "车辆id")
     private java.lang.String vehicleId;
+	/**车牌号*/
+	@Excel(name = "车牌号", width = 15)
+    @Schema(description = "车牌号")
+    @TableField(exist = false)
+    private java.lang.String plateNumber;
 	/**司机id*/
 	@Excel(name = "司机id", width = 15)
     @Schema(description = "司机id")
     private java.lang.String driveId;
+	/**司机名称*/
+	@Excel(name = "司机名称", width = 15)
+    @Schema(description = "司机名称")
+    @TableField(exist = false)
+    private java.lang.String driverName;
 	/**广告id*/
 	@Excel(name = "广告id", width = 15)
     @Schema(description = "广告id")

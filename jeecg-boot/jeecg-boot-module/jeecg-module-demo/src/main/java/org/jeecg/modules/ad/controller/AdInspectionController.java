@@ -33,6 +33,9 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.system.vo.LoginUser;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @Description: 广告年检表
  * @Author: jeecg-boot
@@ -114,6 +117,60 @@ public class AdInspectionController extends JeecgController<AdInspection, IAdIns
 		}
 		Page<AdInspection> page = new Page<AdInspection>(pageNo, pageSize);
 		IPage<AdInspection> pageList = adInspectionService.page(page, queryWrapper);
+		
+		// 增加返回车牌号和司机名称
+		List<AdInspection> records = pageList.getRecords();
+		if(records != null && !records.isEmpty()) {
+			// 收集所有车辆ID
+			List<String> vehicleIds = records.stream()
+				.map(AdInspection::getVehicleId)
+				.distinct()
+				.filter(id -> id != null && !id.isEmpty())
+				.collect(Collectors.toList());
+				
+			// 批量查询车辆信息
+			Map<String, AdVehicle> vehicleMap = new HashMap<>();
+			if(!vehicleIds.isEmpty()) {
+				// 查询车辆信息
+				List<AdVehicle> vehicleList = adVehicleService.listByIds(vehicleIds);
+				vehicleMap = vehicleList.stream()
+					.collect(Collectors.toMap(AdVehicle::getId, vehicle -> vehicle, (k1, k2) -> k1));
+			}
+			
+			// 收集所有司机ID
+			List<String> driverIds = records.stream()
+				.map(AdInspection::getDriveId)
+				.distinct()
+				.filter(id -> id != null && !id.isEmpty())
+				.collect(Collectors.toList());
+				
+			// 批量查询司机信息
+			Map<String, AdDriver> driverMap = new HashMap<>();
+			if(!driverIds.isEmpty()) {
+				// 查询司机信息
+				List<AdDriver> driverList = adDriverService.listByIds(driverIds);
+				driverMap = driverList.stream()
+					.collect(Collectors.toMap(AdDriver::getId, driver -> driver, (k1, k2) -> k1));
+			}
+			
+			// 为每条记录设置车牌号和司机名称
+			for(AdInspection inspection : records) {
+				// 设置车牌号
+				if(inspection.getVehicleId() != null && vehicleMap.containsKey(inspection.getVehicleId())) {
+					AdVehicle vehicle = vehicleMap.get(inspection.getVehicleId());
+					// 假设在AdInspection中添加了plateNumber字段
+					inspection.setPlateNumber(vehicle.getPlateNumber());
+				}
+				
+				// 设置司机名称
+				if(inspection.getDriveId() != null && driverMap.containsKey(inspection.getDriveId())) {
+					AdDriver driver = driverMap.get(inspection.getDriveId());
+					// 假设在AdInspection中添加了driverName字段
+					inspection.setDriverName(driver.getName());
+				}
+			}
+		}
+		
 		return Result.OK(pageList);
 	}
 

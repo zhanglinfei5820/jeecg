@@ -8,8 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.jeecg.common.exception.JeecgBootException;
 import org.jeecg.modules.ad.entity.AdPublish;
 import org.jeecg.modules.ad.entity.AdPublishDetail;
+import org.jeecg.modules.ad.entity.AdVehicle;
 import org.jeecg.modules.ad.entity.Vo.AdPublishDetailVO;
 import org.jeecg.modules.ad.mapper.AdPublishDetailMapper;
+import org.jeecg.modules.ad.mapper.AdVehicleMapper;
 import org.jeecg.modules.ad.service.IAdPublishDetailService;
 import org.jeecg.modules.ad.service.IAdPublishService;
 import org.jeecg.modules.ad.util.AdPublishDetailValidator;
@@ -36,6 +38,8 @@ public class AdPublishDetailServiceImpl extends ServiceImpl<AdPublishDetailMappe
     private IAdPublishService adPublishService;
     @Resource
     private AdPublishDetailMapper adPublishDetailMapper;
+    @Resource
+    private AdVehicleMapper adVehicleMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -98,11 +102,16 @@ public class AdPublishDetailServiceImpl extends ServiceImpl<AdPublishDetailMappe
 //                log.info("计算实际分发数量: {}, publishId: {}", actualDrivers, publishId);
 
                 // 6. 更新分发记录
+                boolean full = isFull(totalDistributed, adPublishDetail.getActualDrivers(), adPublish.getDrivers());
+                if (full) {
+                    adPublishDetail.setStatus(4);
+                }
                 updateDistributeRecord(adPublishDetail);
                 log.info("更新分发记录成功，publishDetailId: {}", adPublishDetail.getId());
 
                 // 7. 处理满员情况
-                if (isFull(totalDistributed, adPublishDetail.getActualDrivers(), adPublish.getDrivers())) {
+                if (full) {
+                    adPublishDetail.setStatus(4);
                     log.info("广告已满员，开始更新其他未分发记录状态，publishId: {}", publishId);
                     updateRemainingRecords(publishId);
                 }
@@ -122,6 +131,35 @@ public class AdPublishDetailServiceImpl extends ServiceImpl<AdPublishDetailMappe
         } catch (Exception e) {
             log.error("分发广告发生未知异常，publishId: " + publishId, e);
             throw new RuntimeException("分发广告失败：" + e.getMessage());
+        }
+    }
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String installation(AdPublishDetailVO adPublishDetailVO) {
+        String publishId = adPublishDetailVO.getPublishId();
+        try {
+            //车辆安装状态
+            Integer status = adPublishDetailVO.getStatus();
+            String vehicleId = adPublishDetailVO.getVehicleId();
+            AdVehicle adVehicle = adVehicleMapper.selectById(vehicleId);
+            if (adVehicle == null){
+                throw new RuntimeException("分发失败，车辆信息不存在!");
+            }
+            adVehicle.setStatus(status);
+            adVehicle.setInstallationImage(adPublishDetailVO.getInstallationImage());
+            adVehicle.setInstallationTime(adPublishDetailVO.getInstallationTime());
+            adVehicleMapper.updateById(adVehicle);
+            AdPublishDetail detail = this.getById(adPublishDetailVO.getId());
+            if (detail == null || detail.getStatus()==null){
+                throw new RuntimeException("分发失败，任务数据不存在!");
+            }
+            //已安装
+            detail.setStatus(CommonConstant.INTEGER_VALUE_6);
+            this.updateById(detail);
+            return "安装成功！";
+        }catch (Exception e) {
+            log.error("安装发生未知异常，publishId: " + publishId, e);
+            throw new RuntimeException("安装广告失败：" + e.getMessage());
         }
     }
 

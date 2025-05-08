@@ -59,10 +59,12 @@ public class AdReport implements Serializable {
 	/**发布明细ID*/
 	@Excel(name = "发布明细ID", width = 15)
     @Schema(description = "发布明细ID")
+    @Dict(dictTable = "ad_publish_detail", dicText = "name", dicCode = "id")
     private java.lang.String publishDetailId;
 	/**司机ID*/
 	@Excel(name = "司机ID", width = 15)
     @Schema(description = "司机ID")
+    @Dict(dictTable = "ad_driver", dicText = "name", dicCode = "id")
     private java.lang.String driverId;
 	/**上报时间*/
 	@Excel(name = "上报时间", width = 20, format = "yyyy-MM-dd HH:mm:ss")

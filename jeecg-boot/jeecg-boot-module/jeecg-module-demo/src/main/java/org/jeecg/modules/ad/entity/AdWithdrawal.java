@@ -4,10 +4,8 @@ import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.math.BigDecimal;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.annotation.TableLogic;
+
+import com.baomidou.mybatisplus.annotation.*;
 import org.jeecg.common.constant.ProvinceCityArea;
 import org.jeecg.common.util.SpringContextUtils;
 import lombok.Data;
@@ -60,6 +58,11 @@ public class AdWithdrawal implements Serializable {
 	@Excel(name = "司机ID", width = 15)
     @Schema(description = "司机ID")
     private java.lang.String driverId;
+    /**司机名称*/
+    @Excel(name = "司机名称", width = 15)
+    @Schema(description = "司机名称")
+    @TableField(exist = false)
+    private java.lang.String driverName;
 	/**提现金额*/
 	@Excel(name = "提现金额", width = 15)
     @Schema(description = "提现金额")

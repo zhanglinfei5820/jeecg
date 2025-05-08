@@ -8,7 +8,13 @@ export const columns: BasicColumn[] = [
    {
     title: '司机ID',
     align:"center",
-    dataIndex: 'driverId'
+    dataIndex: 'driverId',
+    ifShow: false
+   },
+   {
+    title: '司机名称',
+    align:"center",
+    dataIndex: 'driverName'
    },
    {
     title: '抽成',
@@ -20,14 +26,14 @@ export const columns: BasicColumn[] = [
     align:"center",
     dataIndex: 'amount'
    },
-   {
-    title: '类型',
-    align:"center",
-    dataIndex: 'type',
-    customRender: ({ text }) => { 
-      return render.renderDict(text, 'ad_stream_type');
-    }
-   },
+  //  {
+  //   title: '类型',
+  //   align:"center",
+  //   dataIndex: 'type',
+  //   customRender: ({ text }) => { 
+  //     return render.renderDict(text, 'ad_stream_type');
+  //   }
+  //  },
    {
     title: '交易类型',
     align:"center",
@@ -124,21 +130,21 @@ export const formSchema: FormSchema[] = [
           ];
      },
   },
-  {
-    label: '类型',
-    field: 'type',
-    component: 'JDictSelectTag',
-    componentProps: {
-      dictCode: "ad_stream_type",
-      placeholder: '请选择类型',
-      stringToNumber: true
-    },
-    dynamicRules: ({model,schema}) => {
-          return [
-                 { required: true, message: '请选择类型!'},
-          ];
-     },
-  },
+  // {
+  //   label: '类型',
+  //   field: 'type',
+  //   component: 'JDictSelectTag',
+  //   componentProps: {
+  //     dictCode: "ad_stream_type",
+  //     placeholder: '请选择类型',
+  //     stringToNumber: true
+  //   },
+  //   dynamicRules: ({model,schema}) => {
+  //         return [
+  //                { required: true, message: '请选择类型!'},
+  //         ];
+  //    },
+  // },
   {
     label: '交易类型',
     field: 'transactionType',

@@ -66,5 +66,7 @@ public interface IAdVehicleService extends IService<AdVehicle> {
 
     void editAdVehicle(AdVehicle adVehicle);
 
+    void uploadInstallationImages(String id, String images);
+
 
 }

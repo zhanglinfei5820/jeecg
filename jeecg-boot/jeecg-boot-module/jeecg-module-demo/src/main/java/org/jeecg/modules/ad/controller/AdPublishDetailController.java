@@ -53,6 +53,8 @@ public class AdPublishDetailController extends JeecgController<AdPublishDetail, 
 	private ICommonLoginUserService commonLoginUserService;
 	@Resource
 	private IAdMerchantService iAdMerchantService;
+	@Resource
+	private IAdCompanyService iAdCompanyService;
 
 	/**
 	 * 分页列表查询
@@ -74,9 +76,9 @@ public class AdPublishDetailController extends JeecgController<AdPublishDetail, 
 		if (loginUser == null) {
 			return Result.error("用户未登录");
 		}
-		if (CommonConstant.ADMIN.equals(loginUser.getUsername())) {
-			adPublishDetail.setType(null);
-		}
+//		if (CommonConstant.ADMIN.equals(loginUser.getUsername())) {
+//			adPublishDetail.setType(null);
+//		}
 		String relatedId = loginUser.getRelatedId();
         QueryWrapper<AdPublishDetail> queryWrapper = QueryGenerator.initQueryWrapper(adPublishDetail, req.getParameterMap());
 		if (!CommonConstant.ADMIN.equals(loginUser.getUsername())) {
@@ -95,6 +97,101 @@ public class AdPublishDetailController extends JeecgController<AdPublishDetail, 
 		}
 		Page<AdPublishDetail> page = new Page<AdPublishDetail>(pageNo, pageSize);
 		IPage<AdPublishDetail> pageList = adPublishDetailService.page(page, queryWrapper);
+		
+		// 增加返回数据：公司名称、发布广告的名称
+		List<AdPublishDetail> records = pageList.getRecords();
+		if(records != null && !records.isEmpty()) {
+			// 收集所有发布ID
+			List<String> publishIds = records.stream()
+				.map(AdPublishDetail::getPublishId)
+				.distinct()
+				.filter(id -> id != null && !id.isEmpty())
+				.collect(Collectors.toList());
+				
+			// 批量查询发布广告信息
+			Map<String, AdPublish> publishMap = new HashMap<>();
+			if(!publishIds.isEmpty()) {
+				List<AdPublish> publishList = adPublishService.listByIds(publishIds);
+				publishMap = publishList.stream()
+					.collect(Collectors.toMap(AdPublish::getId, publish -> publish, (k1, k2) -> k1));
+			}
+			
+			// 收集所有涉及的车辆ID
+			List<String> vehicleIds = records.stream()
+				.map(AdPublishDetail::getVehicleId)
+				.distinct()
+				.filter(id -> id != null && !id.isEmpty())
+				.collect(Collectors.toList());
+				
+			// 批量查询车辆信息
+			Map<String, AdVehicle> vehicleMap = new HashMap<>();
+			if(!vehicleIds.isEmpty()) {
+				List<AdVehicle> vehicleList = adVehicleService.listByIds(vehicleIds);
+				vehicleMap = vehicleList.stream()
+					.collect(Collectors.toMap(AdVehicle::getId, vehicle -> vehicle, (k1, k2) -> k1));
+			}
+			
+			// 收集所有司机ID
+			List<String> driverIds = records.stream()
+				.map(AdPublishDetail::getDriverId)
+				.distinct()
+				.filter(id -> id != null && !id.isEmpty())
+				.collect(Collectors.toList());
+				
+			// 批量查询司机信息
+			Map<String, AdDriver> driverMap = new HashMap<>();
+			if(!driverIds.isEmpty()) {
+				List<AdDriver> driverList = adDriverService.listByIds(driverIds);
+				driverMap = driverList.stream()
+					.collect(Collectors.toMap(AdDriver::getId, driver -> driver, (k1, k2) -> k1));
+			}
+			
+			// 收集所有公司ID
+			List<String> companyIds = records.stream()
+				.map(AdPublishDetail::getCompanyId)
+				.distinct()
+				.filter(id -> id != null && !id.isEmpty())
+				.collect(Collectors.toList());
+				
+			// 批量查询公司信息
+			Map<String, AdCompany> companyMap = new HashMap<>();
+			if(!companyIds.isEmpty()) {
+				// 使用AdCompany服务
+				List<AdCompany> companyList = iAdCompanyService.listByIds(companyIds);
+				companyMap = companyList.stream()
+					.collect(Collectors.toMap(AdCompany::getId, company -> company, (k1, k2) -> k1));
+			}
+			
+			// 设置相关信息
+			for(AdPublishDetail detail : records) {
+				// 设置发布广告名称
+				if(detail.getPublishId() != null && publishMap.containsKey(detail.getPublishId())) {
+					detail.setName(publishMap.get(detail.getPublishId()).getName());
+				}
+
+				// 司机名称已在实体中定义
+				if(detail.getDriverId() != null && driverMap.containsKey(detail.getDriverId())) {
+					detail.setDriverName(driverMap.get(detail.getDriverId()).getName());
+				}
+
+				// 车牌号
+				if(detail.getVehicleId() != null && vehicleMap.containsKey(detail.getVehicleId())) {
+					// 假设AdPublishDetail中新增了plateNumber字段
+					AdVehicle vehicle = vehicleMap.get(detail.getVehicleId());
+					detail.setPlateNumber(vehicle.getPlateNumber());
+				}
+
+				// 公司名称
+				if(detail.getCompanyId() != null && companyMap.containsKey(detail.getCompanyId())) {
+					// 使用商户名称
+					AdCompany adCompany = companyMap.get(detail.getCompanyId());
+					if(adCompany.getName() != null) {
+						detail.setCompanyName(adCompany.getName());
+					}
+				}
+			}
+		}
+		
 		return Result.OK(pageList);
 	}
 
@@ -147,9 +244,11 @@ public class AdPublishDetailController extends JeecgController<AdPublishDetail, 
 	@AutoLog(value = "广告发布明细表-添加")
 	@Operation(summary="广告发布明细表-添加")
 	@RequiresPermissions("ad:ad_publish_detail:add")
+	@Transactional(rollbackFor = Exception.class)
 	@PostMapping(value = "/add")
 	public Result<String> add(@RequestBody AdPublishDetail adPublishDetail) {
 		adPublishDetailService.save(adPublishDetail);
+		adPublishDetailService.distribute(adPublishDetail);
 		return Result.OK("添加成功！");
 	}
 	
@@ -384,43 +483,7 @@ public class AdPublishDetailController extends JeecgController<AdPublishDetail, 
 				//重置维修金次数
 				vehicle.setMaintenanceCount(0);
 			}
-//			for (Map<String, Object> vehicleData : vehicleMapList) {
-//				String vehicleId = (String) vehicleData.get("id");
-//				AdVehicle vehicle = vehicleMap.get(vehicleId);
-//
-//				if (vehicle == null) {
-//					log.warn("未找到ID为{}的车辆信息", vehicleId);
-//					continue;
-//				}
-//
-//				// 创建司机明细对象
-//				AdPublishDetail driverDetail = new AdPublishDetail();
-//				driverDetail.setPublishId(publishId);
-//				driverDetail.setPosition(adPublish.getPosition());
-//
-//				// 计算司机的价格 = 广告单价 - (广告单价 * 公司分成比例)
-//				BigDecimal adPrice = adPublish.getPrice();
-//				BigDecimal companyShare = adPrice.multiply(percentageFactor);
-//				BigDecimal driverPrice = adPrice.subtract(companyShare);
-//				driverDetail.setPrice(driverPrice);
-//
-//				driverDetail.setStatus(3);  // 状态设置为3
-//				driverDetail.setType(1);    // 类型设置为1(司机)
-//				driverDetail.setDrivers(1);  // 默认为1
-//				driverDetail.setDriverId(vehicle.getDriverId());
-//
-//				// 设置司机名称
-//				if (vehicle.getDriverId() != null) {
-//					driverDetail.setDriverName(driverNameMap.getOrDefault(vehicle.getDriverId(), ""));
-//				}
-//
-//				driverDetail.setCompanyId(companyId);
-//				driverDetail.setVehicleId(vehicleId);
-//				driverDetail.setName(adPublish.getName());
-//
-//				detailList.add(driverDetail);
-//			}
-			
+
 			if (detailList.isEmpty()) {
 				return Result.error("没有有效的车辆信息可以分发");
 			}
@@ -547,22 +610,39 @@ public class AdPublishDetailController extends JeecgController<AdPublishDetail, 
 	}
 
 	/**
-	 *  分发
+	 *  抽成
 	 *
 	 * @param adPublishDetail
 	 * @return
 	 */
-	@AutoLog(value = "广告发布明细表-分发")
-	@Operation(summary="广告发布明细表-分发")
-	@RequiresPermissions("ad:ad_publish_detail:distribute")
+	@AutoLog(value = "广告发布明细表-抽成")
+	@Operation(summary="广告发布明细表-抽成")
 	@RequestMapping(value = "/distribute", method = {RequestMethod.PUT,RequestMethod.POST})
 	public Result<String> distribute(@RequestBody AdPublishDetail adPublishDetail) {
 		try {
 			String result = adPublishDetailService.distribute(adPublishDetail);
 			return Result.OK(result);
 		} catch (Exception e) {
-			log.error("分发广告失败", e);
-			return Result.error("分发失败：" + e.getMessage());
+			log.error("抽成广告失败", e);
+			return Result.error("抽成失败：" + e.getMessage());
+		}
+	}
+	/**
+	 *  安装
+	 *
+	 * @param adPublishDetailVO
+	 * @return
+	 */
+	@AutoLog(value = "司机任务-安装")
+	@Operation(summary="司机任务-安装")
+	@RequestMapping(value = "/installation", method = {RequestMethod.PUT,RequestMethod.POST})
+	public Result<String> installation(@RequestBody AdPublishDetailVO adPublishDetailVO) {
+		try {
+			String result = adPublishDetailService.installation(adPublishDetailVO);
+			return Result.OK(result);
+		} catch (Exception e) {
+			log.error("司机任务安装失败", e);
+			return Result.error("司机任务安装失败：" + e.getMessage());
 		}
 	}
 }

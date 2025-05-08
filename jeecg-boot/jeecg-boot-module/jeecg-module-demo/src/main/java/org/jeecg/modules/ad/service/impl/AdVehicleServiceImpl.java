@@ -1,12 +1,16 @@
 package org.jeecg.modules.ad.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.shiro.SecurityUtils;
+import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.system.vo.DictModel;
 import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.modules.ad.entity.*;
@@ -428,6 +432,24 @@ public class AdVehicleServiceImpl extends ServiceImpl<AdVehicleMapper, AdVehicle
     @Transactional
     public void editAdVehicle(AdVehicle adVehicle) {
         // 判断车辆状态是否为1(启用)，如果是则执行后续逻辑
+        AdVehicle vehicle = this.getById(adVehicle.getId());
+        if (vehicle == null) {
+            throw new RuntimeException("数据搜索不到!");
+        }
+        Integer status = vehicle.getStatus();
+        // 获取车辆ID和司机ID
+        String vehicleId = adVehicle.getId();
+        String driverId = adVehicle.getDriverId();
+        if (CommonConstant.INTEGER_VALUE_1.equals(status) && !status.equals(adVehicle.getStatus())) {
+            LambdaUpdateWrapper<AdPublishDetail> adPublishDetailLambdaUpdateWrapper = new UpdateWrapper<AdPublishDetail>().lambda()
+                    .eq(AdPublishDetail::getVehicleId, vehicleId)
+                    .eq(AdPublishDetail::getDriverId, driverId)
+                    .in(AdPublishDetail::getStatus, 4, 6)
+                    .set(AdPublishDetail::getStatus, adVehicle.getStatus());
+            adPublishDetailService.update(adPublishDetailLambdaUpdateWrapper);
+            adVehicle.setInstallationTime(null);
+            adVehicle.setInstallationImage("");
+        }
         if (adVehicle != null && adVehicle.getStatus() != null && adVehicle.getStatus() == 1) {
             Date installationTime = adVehicle.getInstallationTime();
             if (installationTime == null){
@@ -435,9 +457,7 @@ public class AdVehicleServiceImpl extends ServiceImpl<AdVehicleMapper, AdVehicle
             }
             log.info("车辆状态为启用，执行后续查询和处理逻辑");
             adVehicle.setMaintenanceCount(0);
-            // 获取车辆ID和司机ID
-            String vehicleId = adVehicle.getId();
-            String driverId = adVehicle.getDriverId();
+
 
             if (vehicleId == null || driverId == null) {
                 log.warn("车辆ID或司机ID为空，无法继续处理");
@@ -451,7 +471,7 @@ public class AdVehicleServiceImpl extends ServiceImpl<AdVehicleMapper, AdVehicle
                 detailQueryWrapper.eq("vehicle_id", vehicleId)
                         .eq("driver_id", driverId)
                         .eq("type", 1)      // 类型为1(司机)
-                        .eq("status", 3);   // 状态为3
+                        .in("status", 4,6);   // 状态为3
 
                 // 执行查询
                 List<AdPublishDetail> publishDetails = adPublishDetailService.list(detailQueryWrapper);
@@ -471,21 +491,21 @@ public class AdVehicleServiceImpl extends ServiceImpl<AdVehicleMapper, AdVehicle
                                 .eq("status", 0); // 状态为0(待处理)
 
                         // 执行查询
-                        long count = adReportService.count(reportQueryWrapper);
+                        AdReport adReport = adReportService.getOne(reportQueryWrapper);
 
                         // 如果没有找到对应的记录，则需要创建新的AdReport
-                        if (count == 0) {
+                        // 获取广告信息，以便获取投放开始时间
+                        AdPublish adPublish = adPublishService.getById(publishId);
+                        if (adPublish == null) {
+                            log.warn("未找到publishId={}的广告信息，跳过创建AdReport", publishId);
+                            throw new RuntimeException("未找到publishId="+publishId+"的广告信息，跳过创建AdReport");
+                        }
+                        if (adReport == null) {
                             log.info("未找到driverId={}和publishDetailId={}的对应AdReport记录，创建新记录", driverId, publishDetailId);
 
-                            // 获取广告信息，以便获取投放开始时间
-                            AdPublish adPublish = adPublishService.getById(publishId);
-                            if (adPublish == null) {
-                                log.warn("未找到publishId={}的广告信息，跳过创建AdReport", publishId);
-                                throw new RuntimeException("未找到publishId="+publishId+"的广告信息，跳过创建AdReport");
-                            }
 
                             // 创建AdReport对象
-                            AdReport adReport = new AdReport();
+                            adReport = new AdReport();
 
                             // 设置基本信息
                             adReport.setDriverId(driverId);
@@ -511,6 +531,14 @@ public class AdVehicleServiceImpl extends ServiceImpl<AdVehicleMapper, AdVehicle
                                 throw new RuntimeException("创建AdReport记录失败");
                             }
                         } else {
+                            // 计算上报时间
+                            Date launchStartTime = adPublish.getLaunchStartTime();
+                            Date launchEndTime = adPublish.getLaunchEndTime();
+                            if (installationTime.after(launchEndTime)){
+                                throw new RuntimeException("安装时间不能在投放结束之间之后！");
+                            }
+                            Date reportTime = calculateReportTime(installationTime, launchStartTime, launchEndTime);
+                            adReport.setReportTime(reportTime);
                             log.info("已存在driverId={}和publishDetailId={}的AdReport记录，跳过创建", driverId, publishDetailId);
                         }
                     }
@@ -576,4 +604,58 @@ public class AdVehicleServiceImpl extends ServiceImpl<AdVehicleMapper, AdVehicle
         return calculatedDate;
     }
 
+
+    @Override
+    @Transactional
+    public void uploadInstallationImages(String id, String images){
+        AdVehicle adVehicle = this.getById(id);
+        if(adVehicle == null) {
+            throw new RuntimeException("未找到对应车辆!");
+        }
+        adVehicle.setStatus(CommonConstant.INTEGER_VALUE_1);
+        adVehicle.setInstallationImage(images);
+        adVehicle.setInstallationTime(new Date());
+        this.updateById(adVehicle);
+        String driverId = adVehicle.getDriverId();
+        String adId = adVehicle.getAdId();
+        LambdaQueryWrapper<AdPublishDetail> adPublishDetailLambdaQueryWrapper = new QueryWrapper<AdPublishDetail>().lambda()
+                .eq(AdPublishDetail::getVehicleId, adVehicle.getId())
+                .eq(AdPublishDetail::getDriverId, driverId)
+                .eq(AdPublishDetail::getPublishId, adId)
+                .eq(AdPublishDetail::getStatus, CommonConstant.INTEGER_VALUE_3);
+        AdPublishDetail publishDetail = adPublishDetailService.getOne(adPublishDetailLambdaQueryWrapper);
+        if (publishDetail == null){
+            throw new RuntimeException("司机任务明细找不到！");
+        }
+        publishDetail.setStatus(CommonConstant.INTEGER_VALUE_6);
+        adPublishDetailService.updateById(publishDetail);
+        AdPublish adPublish = adPublishService.getById(adId);
+        if (adPublish == null) {
+            log.warn("未找到publishId={}的广告信息，跳过创建AdReport", adId);
+            throw new RuntimeException("未找到publishId="+adId+"的广告信息，跳过创建AdReport");
+        }
+        Date installationTime = new Date();
+        // 创建AdReport对象
+        AdReport adReport = new AdReport();
+        // 设置基本信息
+        adReport.setDriverId(driverId);
+        adReport.setPublishDetailId(publishDetail.getId());
+        adReport.setStatus(0); // 设置状态为0(待处理)
+        adReport.setMaintenanceCount(0);
+        // 计算上报时间
+        Date launchStartTime = adPublish.getLaunchStartTime();
+        Date launchEndTime = adPublish.getLaunchEndTime();
+        if (installationTime.after(launchEndTime)){
+            throw new RuntimeException("安装时间不能在投放结束之间之后！");
+        }
+        Date reportTime = calculateReportTime(installationTime, launchStartTime, launchEndTime);
+        adReport.setReportTime(reportTime);
+        adReport.setReportType(1);
+        // 保存AdReport对象
+        boolean saveResult = adReportService.save(adReport);
+        if (!saveResult) {
+            log.error("创建AdReport记录失败");
+            throw new RuntimeException("创建AdReport记录失败");
+        }
+    }
 }

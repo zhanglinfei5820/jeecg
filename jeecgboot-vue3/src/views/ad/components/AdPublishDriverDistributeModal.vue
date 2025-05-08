@@ -1,6 +1,6 @@
 <template>
     <BasicModal v-bind="$attrs" @register="registerModal" destroyOnClose title="分发" :width="500" @ok="handleSubmit">
-        <BasicForm @register="registerForm" name="AdPublishDetailDistributeForm" />
+        <BasicForm @register="registerForm" name="AdPublishDriverDistributeForm" />
     </BasicModal>
   </template>
   
@@ -8,7 +8,7 @@
       import {ref, computed, unref} from 'vue';
       import {BasicModal, useModalInner} from '/@/components/Modal';
       import {BasicForm, useForm} from '/@/components/Form/index';
-      import {distribute} from '../AdPublishDetail.api';
+      import {installation} from '../AdPublishDriver.api';
       import { JDictSelectTag } from '/@/components/Form';
       // Emits声明
       const emit = defineEmits(['register','success']);
@@ -18,48 +18,43 @@
           labelWidth: 100,
           schemas: [
               {
-                  label: '抽成金额',
-                  field: 'percentage',
-                  component: 'InputNumber',
+                  label: '安装图片',
+                  field: 'installationImage',
+                  component: 'JImageUpload',
                   componentProps: {
-                      min: 0,
-                      max: 100,
-                      precision: 2,
-                      placeholder: '请输入抽成金额'
+                    fileMax: 1
                   },
                   dynamicRules: ({model,schema}) => {
                       return [
-                          { required: true, message: '请输入抽成金额!'},
+                          { required: true, message: '请上传安装图片!'},
                       ];
                   },
               },
+            //   {
+            //       label: '审核状态',
+            //       field: 'status',
+            //       component: 'JDictSelectTag',
+            //       componentProps: {
+            //           dictCode: "ad_publish_detail_status",
+            //           placeholder: '请选择审核状态',
+            //           stringToNumber: true
+            //       },
+            //       dynamicRules: ({model,schema}) => {
+            //           return [
+            //               { required: true, message: '请选择审核状态!'},
+            //           ];
+            //       },
+            //   },
               {
-                  label: '审核状态',
-                  field: 'status',
-                  component: 'JDictSelectTag',
+                  label: '安装时间',
+                  field: 'installationTime',
+                  component: 'DatePicker',
                   componentProps: {
-                      dictCode: "ad_publish_detail_status",
-                      placeholder: '请选择审核状态',
-                      stringToNumber: true
+                      placeholder: '请选择安装时间'
                   },
                   dynamicRules: ({model,schema}) => {
                       return [
-                          { required: true, message: '请选择审核状态!'},
-                      ];
-                  },
-              },
-              {
-                  label: '录用司机数',
-                  field: 'actualDrivers',
-                  component: 'InputNumber',
-                  componentProps: {
-                      min: 0,
-                      precision: 0,
-                      placeholder: '请输入录用司机数'
-                  },
-                  dynamicRules: ({model,schema}) => {
-                      return [
-                          { required: true, message: '请输入录用司机数!'},
+                          { required: true, message: '请选择安装时间!'},
                       ];
                   },
               }
@@ -94,13 +89,13 @@
               //合并原始记录数据和抽成比例
               const submitData = {
                   ...recordData.value,
-                  percentage: values.percentage,
-                  status: values.status,
-                  actualDrivers:values.actualDrivers,
+                  installationImage: values.installationImage,
+                  installationTime: values.installationTime,
+                  status: '1',
                   driverCount: values.driverCount
               };
               //提交表单
-              await distribute(submitData);
+              await installation(submitData);
               //关闭弹窗
               closeModal();
               //刷新列表

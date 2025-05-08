@@ -12,17 +12,30 @@ export const columns: BasicColumn[] = [
    {
     title: '发布ID',
     align:"center",
-    dataIndex: 'publishId'
+    dataIndex: 'publishId',
+    ifShow: false
+   },
+   {
+    title: '发布广告',
+    align:"center",
+    dataIndex: 'name'
    },
    {
     title: '车辆ID',
     align:"center",
-    dataIndex: 'vehicleId'
+    dataIndex: 'vehicleId',
+    ifShow: false
+   },
+   {
+    title: '车牌号',
+    align:"center",
+    dataIndex: 'plateNumber'
    },
    {
     title: '司机ID',
     align:"center",
-    dataIndex: 'driverId'
+    dataIndex: 'driverId',
+    ifShow: false
    },
    {
     title: '司机名称',
@@ -32,7 +45,13 @@ export const columns: BasicColumn[] = [
     {
       title: '公司ID',
       align:"center",
-      dataIndex: 'companyId'
+      dataIndex: 'companyId',
+      ifShow: false
+    },
+    {
+      title: '公司名称',
+      align:"center",
+      dataIndex: 'companyName'
     },
     {
       title: '司机数',
@@ -43,11 +62,6 @@ export const columns: BasicColumn[] = [
       title: '实际司机数',
       align:"center",
       dataIndex: 'actualDrivers'
-    },
-    {
-      title: '公司名称',
-      align:"center",
-      dataIndex: 'companyName'
     },
    {
     title: '广告位置',

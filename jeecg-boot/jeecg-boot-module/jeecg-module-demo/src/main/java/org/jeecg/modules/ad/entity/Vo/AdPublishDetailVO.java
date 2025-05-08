@@ -121,4 +121,15 @@ public class AdPublishDetailVO implements Serializable {
     @Excel(name = "实际司机数", width = 15)
     @Schema(description = "实际司机数")
     private Integer actualDrivers;
+
+    /**安装时间*/
+    @JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    @Schema(description = "安装时间")
+    private java.util.Date installationTime;
+
+    /**安装图片*/
+    @Excel(name = "安装图片", width = 15)
+    @Schema(description = "安装图片")
+    private java.lang.String installationImage;
 }

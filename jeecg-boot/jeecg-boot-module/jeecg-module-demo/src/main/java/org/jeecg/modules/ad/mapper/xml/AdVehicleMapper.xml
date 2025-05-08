@@ -45,7 +45,7 @@
         LEFT JOIN
             ad_publish p ON v.ad_id = p.id
         LEFT JOIN
-            ad_merchant m ON v.company_id = m.id
+            ad_company m ON v.company_id = m.id
         LEFT JOIN
             ad_driver d ON v.driver_id = d.id
         <where>

@@ -9,6 +9,17 @@ const { apiUrl } = useGlobSetting();
 const uploadUrl = `${apiUrl}/sys/common/upload`; 
 //列表数据
 export const columns: BasicColumn[] = [
+  
+  {
+    title: '车牌号',
+    align:"center",
+    dataIndex: 'plateNumber'
+   },
+   {
+    title: '司机名称',
+    align:"center",
+    dataIndex: 'driverName'
+   },
    {
     title: '年检时间',
     align:"center",
@@ -22,7 +33,8 @@ export const columns: BasicColumn[] = [
    {
     title: '车辆id',
     align:"center",
-    dataIndex: 'vehicleId'
+    dataIndex: 'vehicleId',
+    ifShow: false
    },
    {
     title: '类型',

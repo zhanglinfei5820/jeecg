@@ -32,9 +32,9 @@
       </template>
     </BasicTable>
     <!-- 表单区域 -->
-    <AdPublishDetailModal @register="registerModal" @success="handleSuccess"></AdPublishDetailModal>
+    <AdPublishDriverModal @register="registerModal" @success="handleSuccess"></AdPublishDriverModal>
     <!-- 分发弹窗 -->
-    <AdPublishDetailDistributeModal @register="registerDistributeModal" @success="handleSuccess"></AdPublishDetailDistributeModal>
+    <AdPublishDriverDistributeModal @register="registerDistributeModal" @success="handleSuccess"></AdPublishDriverDistributeModal>
   </div>
 </template>
 
@@ -43,10 +43,10 @@
   import {BasicTable, useTable, TableAction} from '/@/components/Table';
   import {useModal} from '/@/components/Modal';
   import { useListPage } from '/@/hooks/system/useListPage'
-  import AdPublishDetailModal from './components/AdPublishDetailModal.vue'
-  import AdPublishDetailDistributeModal from './components/AdPublishDetailDistributeModal.vue'
-  import {columns, searchFormSchema, superQuerySchema} from './AdPublishDetail.data';
-  import {list, deleteOne, batchDelete, getImportUrl,getExportUrl} from './AdPublishDetail.api';
+  import AdPublishDriverModal from './components/AdPublishDriverModal.vue'
+  import AdPublishDriverDistributeModal from './components/AdPublishDriverDistributeModal.vue'
+  import {columns, searchFormSchema, superQuerySchema} from './AdPublishDriver.data';
+  import {list, deleteOne, batchDelete, getImportUrl,getExportUrl} from './AdPublishDriver.api';
   import { downloadFile } from '/@/utils/common/renderUtils';
   import { useUserStore } from '/@/store/modules/user';
   const queryParam = reactive<any>({});
@@ -59,7 +59,7 @@
   //注册table数据
   const { prefixCls,tableContext,onExportXls,onImportXls } = useListPage({
       tableProps:{
-           title: '广告发布明细表',
+           title: '广告发布司机表',
            api: list,
            columns,
            canResize:false,
@@ -173,9 +173,9 @@
            auth: 'ad:ad_publish_detail:edit'
          },
          {
-           label: '抽成',
+           label: '安装',
            onClick: handleDistribute.bind(null, record),
-           auth: 'ad:ad_publish_detail:distribute'
+           auth: 'ad:ad_publish_driver:installation'
          }
        ]
    }

@@ -1,5 +1,6 @@
 package org.jeecg.modules.ad.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.jeecg.modules.ad.entity.AdCompany;
 import org.jeecg.modules.ad.mapper.AdCompanyMapper;
@@ -27,6 +28,12 @@ public class AdCompanyServiceImpl extends ServiceImpl<AdCompanyMapper, AdCompany
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void addCompanyAndUser(AdCompany adCompany) {
+        QueryWrapper<AdCompany> queryWrapper = new QueryWrapper<>();
+        queryWrapper.lambda().eq(AdCompany::getPhone, adCompany.getPhone());
+        long count = this.count(queryWrapper);
+        if (count > 0) {
+            throw new RuntimeException("手机号码已经被录用!");
+        }
         this.saveOrUpdate(adCompany);
         commonLoginUserService.insertSysUser(adCompany.getPhone(),adCompany.getName(),adCompany.getId(), CommonConstant.COMPANY_USER_ROLE, CommonConstant.COMPANY_VALUE);
     }

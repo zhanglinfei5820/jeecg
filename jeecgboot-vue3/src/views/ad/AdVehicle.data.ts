@@ -8,32 +8,35 @@ export const columns: BasicColumn[] = [
   {
     title: '所属司机ID',
     align: "center",
-    dataIndex: 'driverId'
+    dataIndex: 'driverId',
+    ifShow: false
   },
   {
-    title: '所属司机名称',
+    title: '所属司机',
     align: "center",
     dataIndex: 'driverName'
   },
   {
     title: '公司id',
     align: "center",
-    dataIndex: 'companyId'
+    dataIndex: 'companyId',
+    ifShow: false
   },
-  // {
-  //   title: '公司名称',
-  //   align: "center",
-  //   dataIndex: 'companyName'
-  // },
-  // {
-  //   title: '广告名称',
-  //   align: "center",
-  //   dataIndex: 'adName'
-  // },
+  {
+    title: '公司名称',
+    align: "center",
+    dataIndex: 'companyName'
+  },
+  {
+    title: '广告名称',
+    align: "center",
+    dataIndex: 'adName'
+  },
   {
     title: '广告id',
     align: "center",
-    dataIndex: 'adId'
+    dataIndex: 'adId',
+    ifShow: false
   },
   {
     title: '安装时间',

@@ -20,9 +20,11 @@ import org.jeecg.common.util.oConvertUtils;
 import org.jeecg.modules.ad.entity.AdInspection;
 import org.jeecg.modules.ad.entity.AdPublishDetail;
 import org.jeecg.modules.ad.entity.AdTransaction;
+import org.jeecg.modules.ad.entity.AdDriver;
 import org.jeecg.modules.ad.entity.Vo.ReportProcessVo;
 import org.jeecg.modules.ad.service.IAdPublishDetailService;
 import org.jeecg.modules.ad.service.IAdTransactionService;
+import org.jeecg.modules.ad.service.IAdDriverService;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -73,6 +75,8 @@ public class AdTransactionController extends JeecgController<AdTransaction, IAdT
 	private ICommonLoginUserService commonLoginUserService;
 	@Resource
 	private IAdPublishDetailService iAdPublishDetailService;
+	@Resource
+	private IAdDriverService iAdDriverService;
 
 	/**
 	 * 分页列表查询
@@ -110,6 +114,41 @@ public class AdTransactionController extends JeecgController<AdTransaction, IAdT
 		}
 		Page<AdTransaction> page = new Page<AdTransaction>(pageNo, pageSize);
 		IPage<AdTransaction> pageList = adTransactionService.page(page, queryWrapper);
+		
+		// 增加司机名称
+		List<AdTransaction> records = pageList.getRecords();
+		if(records != null && !records.isEmpty()) {
+			// 收集所有司机ID
+			List<String> driverIds = records.stream()
+				.map(AdTransaction::getDriverId)
+				.distinct()
+				.filter(id -> id != null && !id.isEmpty())
+				.collect(Collectors.toList());
+				
+			if(!driverIds.isEmpty()) {
+				// 批量查询司机信息
+				Map<String, String> driverNameMap = new HashMap<>();
+				
+				// 查询司机信息
+				QueryWrapper<AdDriver> driverQueryWrapper = new QueryWrapper<>();
+				driverQueryWrapper.in("id", driverIds);
+				List<AdDriver> driverList = iAdDriverService.list(driverQueryWrapper);
+				
+				// 构建司机ID到名称的映射
+				for(AdDriver driver : driverList) {
+					driverNameMap.put(driver.getId(), driver.getName());
+				}
+				
+				// 为每个交易记录设置司机名称
+				for(AdTransaction transaction : records) {
+					if(transaction.getDriverId() != null && driverNameMap.containsKey(transaction.getDriverId())) {
+						// 假设AdTransaction中添加了driverName字段
+						transaction.setDriverName(driverNameMap.get(transaction.getDriverId()));
+					}
+				}
+			}
+		}
+		
 		return Result.OK(pageList);
 	}
 	

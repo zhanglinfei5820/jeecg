@@ -1,6 +1,7 @@
 package org.jeecg.modules.ad.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.modules.ad.entity.AdDriver;
@@ -37,6 +38,12 @@ public class AdDriverServiceImpl extends ServiceImpl<AdDriverMapper, AdDriver> i
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void AddDriverAndUser(AdDriver adDriver) {
+        LambdaQueryWrapper<AdDriver> queryWrapper = new QueryWrapper<AdDriver>().lambda()
+                .eq(AdDriver::getPhone, adDriver.getPhone());
+        long count = this.count(queryWrapper);
+        if (count > 0) {
+            throw new RuntimeException("手机号码已经被录用!");
+        }
         this.saveOrUpdate(adDriver);
         commonLoginUserService.insertSysUser(adDriver.getPhone(),adDriver.getName(),adDriver.getId(),CommonConstant.DRIVER_USER_ROLE, CommonConstant.DRIVER_VALUE);
     }

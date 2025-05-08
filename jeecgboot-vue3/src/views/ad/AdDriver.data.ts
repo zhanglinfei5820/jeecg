@@ -188,11 +188,6 @@ export const formSchema: FormSchema[] = [
     componentProps: {
       min: 0
     },
-    dynamicRules: () => {
-          return [
-                 {  message: '请输入账户余额!'},
-          ];
-     },
   },
   {
     label: '累计收入',
@@ -201,11 +196,6 @@ export const formSchema: FormSchema[] = [
     componentProps: {
       min: 0
     },
-    dynamicRules: () => {
-          return [
-                 {  message: '请输入累计收入!'},
-          ];
-     },
   },
   {
     label: '备注',

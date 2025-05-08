@@ -8,7 +8,13 @@ export const columns: BasicColumn[] = [
    {
     title: '司机ID',
     align:"center",
-    dataIndex: 'driverId'
+    dataIndex: 'driverId',
+    ifShow: false
+   },
+   {
+    title: '司机名称',
+    align:"center",
+    dataIndex: 'driverName'
    },
    {
     title: '提现金额',

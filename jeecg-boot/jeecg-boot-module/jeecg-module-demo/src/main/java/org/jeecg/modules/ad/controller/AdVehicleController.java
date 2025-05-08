@@ -1,7 +1,12 @@
 package org.jeecg.modules.ad.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,6 +16,8 @@ import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.aspect.annotation.AutoLog;
 import org.jeecg.common.system.base.controller.JeecgController;
 import org.jeecg.modules.ad.entity.AdDriver;
+import org.jeecg.modules.ad.entity.AdPublishDetail;
+import org.jeecg.modules.ad.entity.AdReport;
 import org.jeecg.modules.ad.entity.AdVehicle;
 import org.jeecg.modules.ad.entity.Vo.AdVehicleVO;
 import org.jeecg.modules.ad.service.*;
@@ -23,12 +30,9 @@ import org.springframework.web.servlet.ModelAndView;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
- /**
+/**
  * @Description: 车辆表
  * @Author: jeecg-boot
  * @Date:   2025-04-14
@@ -52,7 +56,9 @@ public class AdVehicleController extends JeecgController<AdVehicle, IAdVehicleSe
 	private IAdPublishService adPublishService;
 	 @Resource
 	 private ICommonLoginUserService commonLoginUserService;
-	
+	 @Resource
+	 private IAdDriverService adDriverService ;
+
 	/**
 	 * 分页列表查询
 	 *
@@ -137,6 +143,11 @@ public class AdVehicleController extends JeecgController<AdVehicle, IAdVehicleSe
 	@RequiresPermissions("ad:ad_vehicle:add")
 	@PostMapping(value = "/add")
 	public Result<String> add(@RequestBody AdVehicle adVehicle) {
+		LambdaQueryWrapper<AdVehicle> queryWrapper = new QueryWrapper<AdVehicle>().lambda()
+				.eq(AdVehicle::getPlateNumber, adVehicle.getPlateNumber());
+		if (adVehicleService.count(queryWrapper) > 0) {
+			return Result.error("车牌号码不能重复!");
+		}
 		adVehicleService.save(adVehicle);
 		return Result.OK("添加成功！");
 	}
@@ -325,4 +336,39 @@ public class AdVehicleController extends JeecgController<AdVehicle, IAdVehicleSe
 		return Result.OK(adVehicleService.countEnabledVehicles(publishId));
 	}
 
+	 @AutoLog(value = "车辆表-获取车牌号")
+	 @Operation(summary="车辆表-获取车牌号")
+	 @GetMapping(value = "/getAdVehicle")
+	 public Result<AdVehicle> getAdVehicle(HttpServletRequest request) {
+		 SysUser loginUser = commonLoginUserService.getLoginUserInfo(request);
+		 if (loginUser == null) {
+			 return Result.error("用户未登录");
+		 }
+		 String relatedId = loginUser.getRelatedId();
+		 if (StringUtils.isBlank(relatedId)) {
+			 return Result.error("获取用户失败!");
+		 }
+		 LambdaQueryWrapper<AdVehicle> queryWrapper = new QueryWrapper<AdVehicle>().lambda().eq(AdVehicle::getDriverId, relatedId);
+		 AdVehicle vehicle = adVehicleService.getOne(queryWrapper);
+		 if (vehicle == null) {
+			 return Result.error("获取车辆信息失败!");
+		 }
+		 return Result.OK(vehicle);
+	 }
+
+
+	 /**
+	  * 小程序-安装审核
+	  *
+	  * @param id 广告上报记录ID
+	  * @param images 上报图片（多张）
+	  * @return
+	  */
+	 @Operation(summary="小程序-安装审核")
+	 @PostMapping(value = "/uploadInstallationImages")
+	 public Result<String> uploadInstallationImages(@RequestParam(name="id", required=true) String id,
+											  @RequestParam(name="images", required=true) String images) {
+//		 adVehicleService.uploadInstallationImages(id, images);
+		 return Result.OK("安装审核成功!");
+	 }
 }

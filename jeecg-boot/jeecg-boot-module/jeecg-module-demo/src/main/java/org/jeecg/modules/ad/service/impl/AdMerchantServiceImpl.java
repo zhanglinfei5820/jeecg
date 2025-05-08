@@ -2,6 +2,7 @@ package org.jeecg.modules.ad.service.impl;
 
 import cn.hutool.core.lang.Snowflake;
 import cn.hutool.core.util.IdUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.jeecg.modules.ad.entity.AdMerchant;
 import org.jeecg.modules.ad.mapper.AdMerchantMapper;
 import org.jeecg.modules.ad.service.IAdMerchantService;
@@ -47,6 +48,12 @@ public class AdMerchantServiceImpl extends ServiceImpl<AdMerchantMapper, AdMerch
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void AddMerchantAndUser(AdMerchant adMerchant) {
+        QueryWrapper<AdMerchant> queryWrapper = new QueryWrapper<>();
+        queryWrapper.lambda().eq(AdMerchant::getPhone, adMerchant.getPhone());
+        long count = this.count(queryWrapper);
+        if (count > 0) {
+            throw new RuntimeException("手机号码已经被录用!");
+        }
         // 3. Save merchant
         this.save(adMerchant);
         // 1. Create sys_user

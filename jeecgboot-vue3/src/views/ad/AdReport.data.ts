@@ -12,12 +12,24 @@ export const columns: BasicColumn[] = [
    {
     title: '发布明细ID',
     align:"center",
-    dataIndex: 'publishDetailId'
+    dataIndex: 'publishDetailId',
+    ifShow: false
+   },
+   {
+    title: '发布明细',
+    align:"center",
+    dataIndex: 'publishDetailId_dictText'
    },
    {
     title: '司机ID',
     align:"center",
-    dataIndex: 'driverId'
+    dataIndex: 'driverId',
+    ifShow: false
+   },
+   {
+    title: '司机',
+    align:"center",
+    dataIndex: 'driverId_dictText'
    },
    {
     title: '上报时间',

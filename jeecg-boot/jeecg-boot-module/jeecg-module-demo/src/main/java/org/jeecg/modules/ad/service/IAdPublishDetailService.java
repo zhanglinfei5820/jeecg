@@ -23,6 +23,7 @@ public interface IAdPublishDetailService extends IService<AdPublishDetail> {
      * @return 分发结果信息
      */
     String distribute(AdPublishDetail adPublishDetail);
+    String installation(AdPublishDetailVO adPublishDetailVO);
 
     IPage<AdPublishDetailVO> queryPulishDetailPageList(Page<AdPublishDetailVO> page, Map<String, Object> queryParams);
 }

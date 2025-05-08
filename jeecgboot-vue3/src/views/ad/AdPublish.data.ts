@@ -14,15 +14,27 @@ export const columns: BasicColumn[] = [
   },
   {
     title: '商户ID',
-    align:"center",
+    align:"center", 
     dataIndex: 'merchantId',
-    width:220
+    width:220,
+    ifShow: false
+   },
+   {
+    title: '商户名称',
+    align:"center", 
+    dataIndex: 'merchantId_dictText'
    },
    {
     title: '物料ID',
     align:"center",
     dataIndex: 'materialId',
-    width:220
+    width:220,
+    ifShow: false
+   },
+   {
+    title: '物料名称',
+    align:"center",
+    dataIndex: 'materialId_dictText'
    },
    {
     title: '广告标题',
@@ -302,10 +314,34 @@ export const formSchema: FormSchema[] = [
     label: '状态',
     field: 'status',
     component: 'JDictSelectTag',
-    componentProps: {
-      dictCode: "ad_publish_status",
-      placeholder: '请选择状态',
-      stringToNumber: true
+    componentProps: ({formActionType}) => {
+      const userStore = useUserStore();
+      const userInfo = userStore.getUserInfo;
+      // 检查用户是否为管理员
+      const isAdmin =  userInfo.username === 'admin';
+      // 如果不是管理员，默认设置为0（待审核）且禁用选择
+      if (!isAdmin) {
+        // 设置表单默认值为0
+        setTimeout(() => {
+          formActionType.setFieldsValue({
+            status: 0
+          });
+        }, 10);
+        
+        return {
+          dictCode: "ad_publish_status",
+          placeholder: '请选择状态',
+          stringToNumber: true,
+          disabled: true  // 禁用下拉选择
+        };
+      }
+      
+      // 如果是管理员，维持原有行为
+      return {
+        dictCode: "ad_publish_status",
+        placeholder: '请选择状态',
+        stringToNumber: true
+      };
     },
     dynamicRules: ({model,schema}) => {
           return [

@@ -11,7 +11,7 @@ enum Api {
   deleteBatch = '/ad/adPublishDetail/deleteBatch',
   importExcel = '/ad/adPublishDetail/importExcel',
   exportXls = '/ad/adPublishDetail/exportXls',
-  distribute = '/ad/adPublishDetail/distribute',
+  installation = '/ad/adPublishDetail/installation',
 }
 /**
  * 导出api
@@ -65,9 +65,9 @@ export const saveOrUpdate = (params, isUpdate) => {
 }
 
 /**
- * 分发
+ * 安装
  * @param params
  */
-export const distribute = (params) => {
-  return defHttp.post({url: Api.distribute, params});
+export const installation = (params) => {
+  return defHttp.post({url: Api.installation, params});
 }

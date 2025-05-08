@@ -1,56 +1,41 @@
 package org.jeecg.modules.ad.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.jeecg.common.api.vo.Result;
+import org.jeecg.common.aspect.annotation.AutoLog;
+import org.jeecg.common.system.base.controller.JeecgController;
+import org.jeecg.common.system.query.QueryGenerator;
+import org.jeecg.common.system.vo.LoginUser;
+import org.jeecg.common.util.oConvertUtils;
+import org.jeecg.modules.ad.entity.AdInspection;
+import org.jeecg.modules.ad.entity.AdPublish;
+import org.jeecg.modules.ad.entity.AdPublishDetail;
+import org.jeecg.modules.ad.entity.AdReport;
+import org.jeecg.modules.ad.mapper.AdInspectionMapper;
+import org.jeecg.modules.ad.mapper.AdPublishDetailMapper;
+import org.jeecg.modules.ad.service.*;
+import org.jeecg.modules.ad.utils.CommonConstant;
+import org.jeecg.modules.system.entity.SysUser;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import org.jeecg.common.api.vo.Result;
-import org.jeecg.common.system.query.QueryGenerator;
-import org.jeecg.common.system.query.QueryRuleEnum;
-import org.jeecg.common.util.oConvertUtils;
-import org.jeecg.modules.ad.entity.AdPublish;
-import org.jeecg.modules.ad.entity.AdReport;
-import org.jeecg.modules.ad.service.*;
-
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import lombok.extern.slf4j.Slf4j;
-
-import org.jeecg.modules.ad.utils.CommonConstant;
-import org.jeecg.modules.system.entity.SysUser;
-import org.jeecgframework.poi.excel.ExcelImportUtil;
-import org.jeecgframework.poi.excel.def.NormalExcelConstants;
-import org.jeecgframework.poi.excel.entity.ExportParams;
-import org.jeecgframework.poi.excel.entity.ImportParams;
-import org.jeecgframework.poi.excel.view.JeecgEntityExcelView;
-import org.jeecg.common.system.base.controller.JeecgController;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
-import org.springframework.web.servlet.ModelAndView;
-import com.alibaba.fastjson.JSON;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.Operation;
-import org.jeecg.common.aspect.annotation.AutoLog;
-import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.apache.shiro.SecurityUtils;
-import org.jeecg.common.system.vo.LoginUser;
-import org.jeecg.modules.ad.mapper.AdInspectionMapper;
-import org.jeecg.modules.ad.mapper.AdPublishDetailMapper;
-import org.jeecg.modules.ad.entity.AdPublishDetail;
-import org.jeecg.modules.ad.entity.AdInspection;
-import org.jeecg.modules.ad.entity.Vo.DriverAdVO;
 
  /**
  * @Description: 广告发布表
@@ -121,9 +106,9 @@ public class AdPublishController extends JeecgController<AdPublish, IAdPublishSe
             queryWrapper.eq("material_id", materialId);
         }
         // 添加广告标题模糊查询
-        String title = req.getParameter("title");
-        if (oConvertUtils.isNotEmpty(title)) {
-            queryWrapper.like("title", title);
+        String name = req.getParameter("name");
+        if (oConvertUtils.isNotEmpty(name)) {
+            queryWrapper.like("name", name);
         }
         // 添加开始报名时间范围查询
         String startTime_begin = req.getParameter("startTime_begin");
@@ -144,6 +129,19 @@ public class AdPublishController extends JeecgController<AdPublish, IAdPublishSe
         }
 		Page<AdPublish> page = new Page<AdPublish>(pageNo, pageSize);
 		IPage<AdPublish> pageList = adPublishService.page(page, queryWrapper);
+		
+		// 增加返回商户名称、物料名称、广告名称
+		List<AdPublish> records = pageList.getRecords();
+		if(records != null && !records.isEmpty()) {
+			for(AdPublish item : records) {
+				// 商户名称和物料名称通过@Dict注解已经自动处理
+				// 确保不重复设置名称字段，避免覆盖已有数据
+				if(item.getName() == null) {
+					item.setName(item.getName());
+				}
+			}
+		}
+		
 		return Result.OK(pageList);
 	}
 	
